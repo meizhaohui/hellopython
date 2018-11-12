@@ -44,8 +44,7 @@ Python3.6.2安装文件的下载地址如下：https://www.python.org/downloads/
     [root@localhost ~/download/Python-3.6.2]# python3 -V
     Python 3.6.2
 ```
--    CentOS系统中默认自带有Python程序，且版本是较低版本的Python 
-2.6.6，Python是Linux系统的基础软件，很多应用基于Python程序，不要随意改动系统的默认Python版本。
+CentOS系统中默认自带有Python程序，且版本是较低版本的Python 2.6.6，Python是Linux系统的基础软件，很多应用基于Python程序，不要随意改动系统的默认Python版本。
 -   我们要使用Python 3.6.2时，可以使用python3启动:
 ```
     [root@localhost ~/download/Python-3.6.2]# python3
@@ -55,13 +54,12 @@ Python3.6.2安装文件的下载地址如下：https://www.python.org/downloads/
     >>> 
 ```
 
-
 为了更好的使用python程序，并且不影响系统的python2环境以及刚安装的python3环境，我们安装virtualenv创建隔绝的Python环境。
 
 ## python虚拟环境virtualenv的安装
 
 
--   安装:
+-   安装
 ```
     [root@localhost ~]# pip3 install virtualenv
     Collecting virtualenv
@@ -83,7 +81,7 @@ Python3.6.2安装文件的下载地址如下：https://www.python.org/downloads/
     [blogsystem@localhost ~]$ ls
     blogs_home  download  venv
 ```
--   创建virtual虚拟运行环境:
+-   创建virtual虚拟运行环境
 ```
     [blogsystem@localhost ~]$ virtualenv venv
     Using base prefix '/usr/local'
@@ -92,7 +90,7 @@ Python3.6.2安装文件的下载地址如下：https://www.python.org/downloads/
     Installing setuptools, pip, wheel...done.
 ```
 
-> 如果加上参数\--no-site-packages，已经安装到系统Python环境中的所有第三方包都不会复制过来，会生成一个不带任何第三方包的"干净"的Python运行环境。
+> - 如果加上参数\--no-site-packages，已经安装到系统Python环境中的所有第三方包都不会复制过来，会生成一个不带任何第三方包的"干净"的Python运行环境。
 
  ```
     [blogsystem@localhost ~]$ virtualenv --no-site-package env
@@ -103,7 +101,7 @@ Python3.6.2安装文件的下载地址如下：https://www.python.org/downloads/
 ```
 
 
--   激活virtual虚拟运行环境venv.
+-   激活virtual虚拟运行环境venv
 
 ```
     [blogsystem@localhost ~]$ source venv/bin/activate 
@@ -161,12 +159,12 @@ Python3.6.2安装文件的下载地址如下：https://www.python.org/downloads/
     setuptools 39.2.0 
     wheel      0.31.1 
 ```
--   退出虚拟环境venv:
+-   退出虚拟环境venv
 ```
     (venv) [blogsystem@localhost ~]$ deactivate 
     [blogsystem@localhost ~]$ 
 ```
--   删除虚拟环境venv，直接删除venv文件夹即可:
+-   删除虚拟环境venv，直接删除venv文件夹即可
 ```
     [blogsystem@localhost ~]$ ls
     blogs_home  download  requirements.txt  venv
@@ -174,7 +172,7 @@ Python3.6.2安装文件的下载地址如下：https://www.python.org/downloads/
     [blogsystem@localhost ~]$ ls
     blogs_home  download  requirements.txt
 ```
--   通过requirements.txt在虚拟环境中安装包:
+-   通过requirements.txt在虚拟环境中安装包
 ``` {.sourceCode .shell}
 [blogsystem@localhost ~]$ virtualenv venv
 Using base prefix '/usr/local'
@@ -203,7 +201,7 @@ wheel      0.31.1
 ```
 
 
-> 以上安装并没有配置pip安装所使用的源，默认为官方的源，受网络影响，有时安装可能会比较慢，同时，使用vitrualenv运行虚拟环境时，必须需要到特定的目录下才能启动虚拟环境，使用有些不便，下面针对以上两个问题，分别配置pip国内源，以及安装virtualenvwrapper来管理虚拟环境。
+以上安装并没有配置pip安装所使用的源，默认为官方的源，受网络影响，有时安装可能会比较慢，同时，使用vitrualenv运行虚拟环境时，必须需要到特定的目录下才能启动虚拟环境，使用有些不便，下面针对以上两个问题，分别配置pip国内源，以及安装virtualenvwrapper来管理虚拟环境。
 
 
 ## pip国内镜像源配置
@@ -230,6 +228,7 @@ wheel      0.31.1
     [global]
     index-url = http://mirrors.aliyun.com/pypi/simple/
     [install]
+    trusted-host = mirrors.aliyun.com
 ```
 ## pip常用命令
 
@@ -244,7 +243,7 @@ wheel      0.31.1
 
 -   linux环境配置方法
 
-使用pip进行安装,可以发现pip源已经替换成的阿里云源:
+使用pip进行安装，可以发现pip源已经替换成的阿里云源:
 
     [root@localhost ~]# pip install virtualenvwrapper
     Looking in indexes: http://mirrors.aliyun.com/pypi/simple/
@@ -259,24 +258,24 @@ wheel      0.31.1
     Successfully installed virtualenvwrapper-4.8.2
 
 创建虚拟目录:
-
+```
     [root@localhost ~]# mkdir virtual_env
-
+```
 在\~/.bashrc中末尾添加配置信息，并保存:
-
+```
     export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
     export WORKON_HOME=/root/virtual_env
     source /usr/local/bin/virtualenvwrapper.sh 
-
+```
 使配置信息的修改生效:
-
+```
     [root@localhost ~]# source ~/.bashrc
-
+```
 -   windows环境配置方法
 
 使用pip进行安装,可以发现pip源已经替换成的阿里云源:
 
-    E:\meichaohui\sphinx_data\meizhaohui_blog>pip install virtualenvwrapper-win
+    E:\>pip install virtualenvwrapper-win
     Looking in indexes: http://mirrors.aliyun.com/pypi/simple/
     Collecting virtualenvwrapper-win
       Downloading http://mirrors.aliyun.com/pypi/packages/f5/23/4cba98733b9122219ce67177d745e4984b524b867cf3728eaa807ea21919/virtualenvwrapper-win-1.2.5.tar.gz
@@ -300,7 +299,7 @@ virtualenvwrapper的使用
 =======================
 
 -   linux环境virtualenvwrapper获取帮助:
-
+```
     [root@localhost ~]# virtualenvwrapper
 
     virtualenvwrapper is a set of extensions to Ian Bicking's virtualenv
@@ -350,9 +349,9 @@ virtualenvwrapper的使用
       wipeenv: remove all packages installed in the current virtualenv
 
       workon: list or change working virtualenvs
-
+```
 -   windows环境virtualenvwrapper获取帮助:
-
+```
     D:\data> virtualenvwrapper
 
      virtualenvwrapper is a set of extensions to Ian Bicking's virtualenv
@@ -392,14 +391,11 @@ virtualenvwrapper的使用
        whereis: return full path to executable on path.
 
        workon: list or change working virtualenvs
+```
 
-::: {.note}
-::: {.admonition-title}
-Note
-:::
 
 通过上面的帮助，可以知道linux系统和windows系统上面virtualenvwrapper大部分命令相同，下面在windows上面使用virtualenvwrapper。
-:::
+
 
 -   virtualenvwrapper常用命令:
 
