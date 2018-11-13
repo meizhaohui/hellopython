@@ -6,7 +6,7 @@ Recording the process of learning Python
 - [Quote escape character](./source/02_quote_escape_character.rst)
 - [variable rule](./source/03_var_name_rule.rst)
 - [Operational character](./source/04_operational_character.rst)
-- [Control Workflow(./source/05_control_workflow.rst)
+- [Control Workflow](./source/05_control_workflow.rst)
 - [Function](./source/06_function.rst)
 - [System module](./source/07_system_module.rst)
 - [OS module](./source/08_os_module.rst) 
