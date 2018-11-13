@@ -17,3 +17,4 @@ Recording the process of learning Python
 - [Regular Expression module](./source/13_re_module.rst) 
 - [Object Oriented Programming](./source/14_object_oriented_programming.rst)
 - [JSON module](./source/15_json_module.rst) 
+- [Use Selenium](./source/16_selenium_install_and_use.rst)
