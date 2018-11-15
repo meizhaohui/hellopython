@@ -167,4 +167,4 @@ texinfo_documents = [
 html_logo = './_static/images/logo.png'
 
 # do not show the rst link
-html_show_sourcelink = False
+html_show_sourcelink = True
