@@ -230,6 +230,8 @@ pip常用命令
 - pip uninstall -y package_name 卸载包
 - pip search package_name 查询包名
 - pip list 列出安装了哪些包
+- pip freeze > requirements.txt 生成依赖包列表
+- pip install -r requirements.txt 安装依赖包
 
 
 virtualenvwrapper的安装
