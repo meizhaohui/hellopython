@@ -243,7 +243,7 @@ Faker方法::
     >>> fake.password() # 随机密码
     's_3XwfSitx'
 
-原代码::
+源代码::
 
     def password(
             self,
