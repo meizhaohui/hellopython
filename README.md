@@ -21,3 +21,4 @@ Recording the process of learning Python
 - [Use Universally Unique Identifier](./source/17_univeral_unique_identifier.rst)
 - [Upload file to Github without username and password](./source/18_upload_file_to_github_without_username_and_password.rst)
 - [Use Faker to Generate Fake Data](./source/19_faker_generate_fake_data.rst)
+- [Use Pipenv to Generate virtual environment](./source/20_pipenv.rst)
