@@ -24,8 +24,8 @@ github设置免密上传文件
 设置用户名和邮箱
 ^^^^^^^^^^^^^^^^
 
--  设置用户名：\ **git config –global user.name "Zhaohui Mei"**
--  设置邮箱：\ **git config –global user.email "mzh.whut@gmail.com”**
+-  设置用户名：\ **git config --global user.name "Zhaohui Mei"**
+-  设置邮箱：\ **git config --global user.email "mzh.whut@gmail.com”**
 -  查看用户名设置是否生效：\ **git config user.name**
 -  查看邮箱设置是否生效：\ **git config user.email**
 
