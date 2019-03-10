@@ -1,4 +1,4 @@
-.. _05_control_workflow:
+.. _control_workflow:
 
 Python的控制流
 ======================

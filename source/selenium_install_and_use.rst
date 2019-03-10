@@ -1,4 +1,4 @@
-.. _16_selenium_install_and_use:
+.. _selenium_install_and_use:
 
 Selenium安装与使用
 ================================

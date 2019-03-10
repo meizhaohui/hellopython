@@ -1,4 +1,4 @@
-.. _09_built-in_data_structure:
+.. _built-in_data_structure:
 
 内建数据结构
 ======================

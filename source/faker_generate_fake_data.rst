@@ -1,4 +1,4 @@
-..  _19_faker_generate_fake_data.rst:
+..  _faker_generate_fake_data.rst:
 
 使用Faker生成虚拟数据
 ==========================

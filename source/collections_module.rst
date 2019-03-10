@@ -1,4 +1,4 @@
-.. _12_collections_module:
+.. _collections_module:
 
 常用内建模块Collections模块的使用
 ========================================

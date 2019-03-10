@@ -1,4 +1,4 @@
-.. _02_quote_escape_character:
+.. _quote_escape_character:
 
 引号与转义符的使用
 ================================

@@ -1,4 +1,4 @@
-.. _14_object_oriented_programming:
+.. _object_oriented_programming:
 
 面向对象编程
 ======================

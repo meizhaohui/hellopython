@@ -1,4 +1,4 @@
-.. _07_system_module:
+.. _system_module:
 
 模块-sys模块
 ======================

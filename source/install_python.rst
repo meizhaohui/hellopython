@@ -1,4 +1,4 @@
-.. _00_install_python:
+.. _install_python:
 
 Python的安装
 ======================
