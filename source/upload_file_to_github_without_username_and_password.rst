@@ -1,4 +1,4 @@
-..  _upload_file_to_github_without_username_and_password:
+..  _18_upload_file_to_github_without_username_and_password:
 
 github设置免密上传文件
 ==========================
