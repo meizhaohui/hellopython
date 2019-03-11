@@ -1,5 +1,5 @@
 # hellopython
-Recording the process of learning Python
+Recording the process of learning Python, You can visit the Docs link: https://hellopython.readthedocs.io/zh_CN/latest/
 # Contents 
 - [Introduction Python](./source/introduction_python.rst)
 - [Install Python](./source/install_python.rst)  <!-- markdown comment： link to other file in this repo -->
