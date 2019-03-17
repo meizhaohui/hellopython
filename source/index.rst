@@ -17,11 +17,11 @@ Welcome to hellopython's documentation!
     quote_escape_character
     var_name_rule
     operational_character
+    built-in_data_structure
     control_workflow
     function
     system_module
-    os_module
-    built-in_data_structure
+    os_module 
     str
     file_read_write
     collections_module
