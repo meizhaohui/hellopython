@@ -11,7 +11,12 @@
 ------------------
 
 - 函数是重用的程序段。允许给一个语块一个名称，然后在别的位置调用这个函数。
+- 代码复用的第一步是使用函数，它是命名的用于区分的代码段。
 - 函数通过def关键字定义。
+- 函数命名必须使用下划线_或字母开头，仅能有字母，数字和下划线,建议使用小写字母和下划线构建函数名。
+- 如果函数不显示调用return函数，那么默认会返回None。
+
+
 
 语法如下::
 
@@ -25,14 +30,14 @@
 在PyCharm中运行::
 
     # 函数定义
-    def sayHi(name):
+    def sayhi(name):
         print('hi! ',name,'. I am Python. How are you?')
         
-    # 调用函数，并传递参数'meichaohui'
-    sayHi('meichaohui')
+    # 调用函数，并传递参数'meizhaohui'
+    sayhi('meizhaohui')
 
     # 运行结果如下::
-    # hi!  meichaohui . I am Python. How are you?
+    # hi!  meizhaohui . I am Python. How are you?
     
 局部变量与全局变量
 --------------------------
@@ -47,37 +52,38 @@
 
 如果在函数中需要使用全局变量，也就是说这个变量能在函数外可以引用，需要使用global关键字进行定义，函数中的全局变量有以下限制::
 
-    * 定义方式为global后面接全局变量名称var_name（即 global var_name   # 定义方式为global后面接全局变量名称var_name）
+    * 定义方式为global后面接全局变量名称VAR_NAME（即 global VAR_NAME   # 定义方式为global后面接全局变量名称VAR_NAME）
     * 全局变量定义时不能在后面赋值
     * 全局变量不能做为函数的传递参数，即一个变量不能即做参数也做全局变量
+    * 建议使用大写字母和下划线构建全局变量名。
     
     
 
 **如下所示的定义是正确的**::
 
-    function Saylang(lang):
-        global love_lang  # 定义全局变量love_lang
+    def saylang(lang):
+        global LOVE_LANG  # 定义全局变量LOVE_LANG
         
 **如下所示的定义是错误的**::
 
-    function Saylang(lang):
-        global love_lang='python'
+    def saylang(lang):
+        global LOVE_LANG='python'
     
 **如下所示的定义也是错误的**::
 
-    function Saylang(love_lang):
-        global love_lang
+    def saylang(LOVE_LANG):
+        global LOVE_LANG
 
 **下面是一个全局变量的示例**::
 
     def saylang(lang):
-        global love_lang
-        love_lang = "Python"
-        print('I think you will more love to learn',love_lang)
-    love_lang = 'Java'
-    print('Before running the function,you love to learn',love_lang)
-    saylang(love_lang)
-    print('After running the function,you love to learn',love_lang)
+        global LOVE_LANG
+        LOVE_LANG = "Python"
+        print('I think you will more love to learn',LOVE_LANG)
+    LOVE_LANG = 'Java'
+    print('Before running the function,you love to learn',LOVE_LANG)
+    saylang(LOVE_LANG)
+    print('After running the function,you love to learn',LOVE_LANG)
 
     # PyCharm中运行结果如下:
     # Before running the function,you love to learn Java
@@ -86,16 +92,16 @@
 
 **再看另外一个例子**::
 
-    def earnMoney():
-        global Money
-        Money = Money + 2000
-        print('You did good job. You earned more money! now you have $%s' % Money)
-    Money = 2000
-    print('You have $%s' % Money,'at first.',end='\n\n')
-    # print('You have ${} at first.\n'.format(Money))
-    earnMoney()
-    earnMoney()
-    earnMoney()
+    def earnmoney():
+        global MONEY
+        MONEY = MONEY + 2000
+        print('You did good job. You earned more money! now you have $%s' % MONEY)
+    MONEY = 2000
+    print('You have $%s' % MONEY,'at first.',end='\n\n')
+    # print('You have ${} at first.\n'.format(MONEY))
+    earnmoney()
+    earnmoney()
+    earnmoney()
 
     # PyCharm中运行结果如下：
     # You have $2000 at first.
@@ -104,53 +110,54 @@
     # You did good job. You earned more money! now you have $6000
     # You did good job. You earned more money! now you have $8000
 
-    # 调用了三次earnMoney()，每次都会增加$2000，最后就变成$8000了。
+    # 调用了三次earnmoney()，每次都会增加$2000，最后就变成$8000了。
     
 
 位置参数
 -----------------------
 
 - 位置参数是指调用函数时根据函数定义的参数位置来传递参数，此时调用函数时，参数个数必须与函数定义的个数相同，否则会报错。
+- 位置参数的一个弊端是必须记住每个位置的参数的含义。
 
 参见如下示例::
 
-    def printLoveLang(name,lang):
+    def print_love_lang(name,lang):
         print('Hi,{},You love the language {}'.format(name,lang))
 
-    printLoveLang('mei','Python')
-    printLoveLang('mei')
+    print_love_lang('mei','Python')
+    print_love_lang('mei')
 
     # PyCharm中运行结果如下：
     # Traceback (most recent call last):
     # Hi,mei,You love the language Python
     #   File "D:/data/python_scripts/test.py", line 5, in <module>
     #     printLoveLang('mei')
-    # TypeError: printLoveLang() missing 1 required positional argument: 'lang'
+    # TypeError: print_love_lang() missing 1 required positional argument: 'lang'
     # 
     # 进程已结束,退出代码1
     
     
-**注：示例中函数printLoveLang定义了两个参数name和lang，下面调用时printLoveLang('mei','Python')指定了两个参数，'mei'传递给参数name，'Python'传递给参数lang，可以正常打印出结果。而printLoveLang('mei')却只传递了一个参数，提示缺少一个位置参数'lang'。**
+**注：示例中函数print_love_lang定义了两个参数name和lang，下面调用时print_love_lang('mei','Python')指定了两个参数，'mei'传递给参数name，'Python'传递给参数lang，可以正常打印出结果。而print_love_lang('mei')却只传递了一个参数，提示缺少一个位置参数'lang'。**
 
 关键字参数
 -----------------------
 
-- 如果函数中有许多形式参数时，而仅想指定其中一部分时，可以通过命名来为这些参数赋值，这被称为关键参数，即使用名字(关键字)来给函数指定实参。
+- 如果函数中有许多形式参数时，而仅想指定其中一部分时，可以通过命名来为这些参数赋值，这被称为关键字参数，即使用名字(关键字)来给函数指定实参。
 - 这样做有以下优点：不用担心参数的顺序；假设其他参数都有默认值，我们只用给我们关心的参数赋值。
 - 函数调用时，位置参数必须在关键参数前面定义，否则会报“positional argument follows keyword argument”错误。
 
 参见如下示例::
 
-    def printLoveLang(name,lang,year=3):
+    def print_love_lang(name,lang,year=3):
         print('Hi,',name,'. You love the language',lang,'. You have learnt it',year,'years!')
 
-    printLoveLang('mei','Python',2)                 # 按位置参数进行依次传值
-    printLoveLang('mei','Python')                   # 按位置参数进行依次传值，未传值给year,year取默认值3
-    printLoveLang(name='mei',lang='Python',year=4)  # 按关键参数进行依次传值
-    printLoveLang('mei','Python',year=5)            # 按位置参数+关键参数的形式进行依次传值，位置参数必须在关键参数前面
-    printLoveLang('mei',lang='Python',year=6)       # 按位置参数+关键参数的形式进行依次传值，位置参数必须在关键参数前面
-    # printLoveLang(name='mei','Python',year=7)     # 此种方式是错误的，会报“positional argument follows keyword argument”错误
-    printLoveLang(year=7,name='mei',lang='Python')  # 按关键参数进行依次传值,不需要按照位置参数的顺序给关键字参数传值
+    print_love_lang('mei','Python',2)                 # 按位置参数进行依次传值
+    print_love_lang('mei','Python')                   # 按位置参数进行依次传值，未传值给year,year取默认值3
+    print_love_lang(name='mei',lang='Python',year=4)  # 按关键参数进行依次传值
+    print_love_lang('mei','Python',year=5)            # 按位置参数+关键参数的形式进行依次传值，位置参数必须在关键参数前面
+    print_love_lang('mei',lang='Python',year=6)       # 按位置参数+关键参数的形式进行依次传值，位置参数必须在关键参数前面
+    # print_love_lang(name='mei','Python',year=7)     # 此种方式是错误的，会报“positional argument follows keyword argument”错误
+    print_love_lang(year=7,name='mei',lang='Python')  # 按关键参数进行依次传值,不需要按照位置参数的顺序给关键字参数传值
 
     # 在PyCharm中运行结果：
     # Hi, mei . You love the language Python . You have learnt it 2 years!
@@ -160,9 +167,9 @@
     # Hi, mei . You love the language Python . You have learnt it 6 years!
     # Hi, mei . You love the language Python . You have learnt it 7 years!
 
-    # printLoveLang(name='mei','Python',year=7)       # 此种方式是错误的，位置参数必须定义在关键参数前面
+    # print_love_lang(name='mei','Python',year=7)       # 此种方式是错误的，位置参数必须定义在关键参数前面
     # 错误信息如下:
-    #     printLoveLang(name='mei','Python',year=7)       # 此种方式是错误的，位置参数必须定义在关键参数前面。
+    #     print_love_lang(name='mei','Python',year=7)       # 此种方式是错误的，位置参数必须定义在关键参数前面。
     #                             ^
     # SyntaxError: positional argument follows keyword argument
     # 
@@ -172,19 +179,20 @@
 -----------------------
 
 - 对于某些函数，如果不想为参数提供值的时候，函数可以自动以默认值作为参数的值。
-- 声明参数时，默认参数必须放置在位置参数列表的后面，不能先声明有默认值的参数(可以理解为关键字参数)，再声明无默认值的参数(可以理解为位置参数)
+- 声明参数时，默认参数必须放置在位置参数列表的后面，不能先声明有默认值的参数(可以理解为关键字参数)，再声明无默认值的参数(可以理解为位置参数)。
 - 必须先声明无默认值的参数，再声明有默认值的参数。
+- 默认参数值在函数定义时已经计算出来，而不是在程序运行时。Python程序员经常犯的一个错误是把可变的数据类型(如列表或字典)当作默认的参数值。
 
 默认值的定义方式为parameter=default_value，参见如下示例::
 
-    # 定义printMessage函数
-    def printMessage(message,times=10):
+    # 定义print_message函数
+    def print_message(message,times=10):
         print(message * times)
 
     print('打印20个*')
-    printMessage('*',20)   	# 此处给printMessage()函数正常传递两个参数
+    print_message('*',20)   	# 此处给print_message()函数正常传递两个参数
     print('打印10个#')
-    printMessage('#')		# 此处给printMessage()函数仅传递了一个参数，此时函数会将取times的默认值10，进行计算。
+    print_message('#')		# 此处给print_message()函数仅传递了一个参数，此时函数会将取times的默认值10，进行计算。
 
     # 在PyCharm中运行结果：
     # D:\ProgramFiles\Python3.6.2\python.exe D:/data/python_project/python_basic/basic_learning.py
@@ -193,6 +201,39 @@
     # 打印10个#
     # ##########
     
+下面示例给出了一个将可变数据类型当作默认值使用,存在的问题是：只有在第1次调用时列表是空的，第二次调用时就会存在之前调用的返回值::
+
+    In [1]: def testerr(arg,result=[]): 
+        ...:     result.append(arg) 
+        ...:     print(result) 
+        ...:                                                                        
+
+    In [2]: testerr('a')                                                           
+    ['a']
+
+    In [3]: testerr('b')                                                           
+    ['a', 'b']
+
+    In [4]: testerr('c')                                                           
+    ['a', 'b', 'c']
+
+正确的做法如下::
+
+    In [1]: def testerr(arg,result=None): 
+        ...:     result=[]
+        ...:     result.append(arg) 
+        ...:     print(result) 
+        ...:                                                                        
+
+    In [2]: testerr('a')                                                           
+    ['a']
+
+    In [3]: testerr('b')                                                           
+    ['b']
+
+    In [4]: testerr('c')                                                           
+    ['c']
+
 可变参数
 --------------------------
 
@@ -209,7 +250,7 @@
 
 参见如下示例::
 
-    def printLoveLang(*args, **kwargs):
+    def print_love_lang(*args, **kwargs):
         print('args:', args, 'type(args):', type(args))
         for value in args:
             print("positional argument:", value)
@@ -218,7 +259,7 @@
             print("keyword argument:\t{}:{}".format(key, kwargs[key]))
 
 
-    printLoveLang(1, 2, 3, name='mei', lang='Python')
+    print_love_lang(1, 2, 3, name='mei', lang='Python')
 
     # 运行结果如下：
     # args: (1, 2, 3) type(args): < class 'tuple'>
@@ -228,6 +269,10 @@
     # kwargs: {'name': 'mei', 'lang': 'Python'} type(kwargs): < class 'dict'>
     # keyword argument: name:mei
     # keyword argument: lang:Python
+
+
+
+
 
 解包裹(unpack)参数
 --------------------------
@@ -292,7 +337,7 @@
 
 如下所示::
 
-    def printLoveLang(name, lang, year=3):
+    def print_love_lang(name, lang, year=3):
         """
         打印你学习编辑语言的年限.
 
@@ -304,7 +349,7 @@
         print('Hi,', name, '. You love the language', lang, '. You have learn it', year, 'years!')
 
 
-    print(printLoveLang.__doc__)
+    print(print_love_lang.__doc__)
 
     # 在PyCharm中运行结果：
     # 
@@ -326,12 +371,12 @@ return语句
 参见如下示例::
 
     # 指定return返回值
-    def printlovelang(name, lang, year=3):
+    def print_love_lang(name, lang, year=3):
         print('Hi,', name, '. You love the language', lang, '. You have learn it', year, 'years!')
         return 'nice'
 
 
-    result = printlovelang('mei', 'Python', 2)                 # 按位置参数进行依次传值
+    result = print_love_lang('mei', 'Python', 2)                 # 按位置参数进行依次传值
     print("return is:{}".format(result))
     
     # 运行结果如下：
@@ -339,10 +384,10 @@ return语句
     # return is:nice
     
     # 不指定return返回值
-    def printlovelang(name, lang, year=3):
+    def print_love_lang(name, lang, year=3):
         print('Hi,', name, '. You love the language', lang, '. You have learn it', year, 'years!')
 
-    result = printlovelang('mei', 'Python', 2)                 # 按位置参数进行依次传值
+    result = print_love_lang('mei', 'Python', 2)                 # 按位置参数进行依次传值
     print("return is:{}".format(result))
     
     # 运行结果如下：
@@ -360,7 +405,7 @@ Python中的None
 
 详细看以下示例::
 
-    >>> def isNone(thing):
+    >>> def is_none(thing):
     ...     if thing is None:
     ...        print("It's None")
     ...     elif thing:
@@ -368,42 +413,42 @@ Python中的None
     ...     else:
     ...        print("It's False")
     ...
-    >>> isNone(None)
+    >>> is_none(None)
     It's None
-    >>> isNone(True)
+    >>> is_none(True)
     It's True
-    >>> isNone(False)
+    >>> is_none(False)
     It's False
-    >>> isNone(1)
+    >>> is_none(1)
     It's True
-    >>> isNone(0)
+    >>> is_none(0)
     It's False
-    >>> isNone(-1)
+    >>> is_none(-1)
     It's True
-    >>> isNone('')
+    >>> is_none('')
     It's False
-    >>> isNone('string')
+    >>> is_none('string')
     It's True
-    >>> isNone([])
+    >>> is_none([])
     It's False
-    >>> isNone(['list'])
+    >>> is_none(['list'])
     It's True
-    >>> isNone({})
+    >>> is_none({})
     It's False
-    >>> isNone({'key':'value'})
+    >>> is_none({'key':'value'})
     It's True
-    >>> isNone((),)
+    >>> is_none((),)
     It's False
     >>> type((),)
     <class 'tuple'>
-    >>> isNone(('tuple'))
+    >>> is_none(('tuple'))
     It's True
     >>> empty_set=set()
     >>> type(empty_set)
     <class 'set'>
-    >>> isNone(empty_set)
+    >>> is_none(empty_set)
     It's False
-    >>> isNone(set('One'))
+    >>> is_none(set('One'))
     It's True
 
 参考文献:
