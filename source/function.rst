@@ -237,16 +237,17 @@
 可变参数
 --------------------------
 
-- 可变参数也就是在函数中接收元组(tuple)和字典(dict)。
-- 普通函数中的用法：def \_\_functionName\_\_(\*args, \*\*kwargs):
-- 类函数中的用法：def \_\_functionName\_\_(self, \*args, \*\*kwargs):
+- 可变参数也就是在函数中接收元组(tuple)和字典(dict)
+- 普通函数中的用法：def function_name(\*args, \*\*kwargs):
+- 类函数中的用法：def method_name(self, \*args, \*\*kwargs):
 - 当参数的个数不确定时，可以使用*args或**kwargs来接收参数组成的元组或字典
+- 使用*收集位置参数，使用**收集关键字参数
 - 元组存储在args中，字典存储在kwargs中
 - \*args是可变的positional arguments列表组成的元组
 - \*\*kwargs是可变的keyword arguments列表组成的字典
 - \*args必须位于\*\*kwargs之前，位置参数必须位于关键字参数前
 - 参数顺序：位置参数、默认参数、\*args、\**\kwargs
-- \*或\*\*后面的关键字名称随意，不必非要使用args或kwargs，如\*Name,\*\*Lang等都可以
+- \*或\*\*后面的关键字名称随意，不必非要使用args或kwargs，如\*name,\*\*lang等都可以
 
 参见如下示例::
 
@@ -326,6 +327,7 @@
 文档字符串DocStrings
 -----------------------------
 
+- 程序的可读性很重要，建议在函数体开始的部分附上函数定义说明的文档，这就是 *文档字符串*
 - 文档字符串DocStrings使用三引号包裹起来
 - 文档字符串DocStrings的惯例是一个多行字符串，有以下规范::
 
@@ -450,6 +452,75 @@ Python中的None
     It's False
     >>> is_none(set('One'))
     It's True
+
+内部函数
+---------------------------
+
+在函数中可以定义另外一个函数。
+
+- 当需要在函数内部多次执行复杂的任务时，内部函数是非常有用的，从而避免了循环和代码的堆叠重复。
+
+示例:: 
+
+    In [1]: def outer(a, b): 
+       ...:     def inner(c, d): 
+       ...:         return c + d 
+       ...:     return inner(a, b) 
+       ...:                                                                         
+
+    In [2]: outer(4, 7)                                                             
+    Out[2]: 11
+
+
+函数闭包
+---------------------------
+
+- 内部函数可以看作是一个 *闭包* 。
+- *闭包* 是一个可以由另一个函数动态生成的函数，并且可以改变和存储函数外创建的变量的值。
+
+示例::
+
+    In [1]: def outer2(num1, num2): 
+       ...:     def inner2(): 
+       ...:         return num1 + num2
+       ...:     return inner2 
+       ...:                                                                         
+
+    In [2]: outer2(4, 7)                                                               
+    Out[2]: <function __main__.outer2.<locals>.inner2()>
+
+    In [3]: outer2(4, 7)()                                                             
+    Out[3]: 11
+
+    In [4]: a = outer2(2, 3)                                                           
+
+    In [5]: b = outer2(4, 7)                                                           
+
+    In [6]: a()                                                                     
+    Out[6]: 5
+
+    In [7]: b()                                                                     
+    Out[7]: 11
+
+    In [8]: a                                                                       
+    Out[8]: <function __main__.outer2.<locals>.inner2()>
+
+    In [9]: b                                                                       
+    Out[9]: <function __main__.outer2.<locals>.inner2()>
+
+    In [10]: type(a)                                                                
+    Out[10]: function
+
+    In [11]: type(b)                                                                
+    Out[11]: function
+
+
+- inner2()直接使用外部的变量a和b,而不是通过另外一个参数获取。
+- outer2()返回值为inner2函数，而不是调用它。
+- return inner2 返回的是inner2函数的复制。
+- inner2是一个闭包，一个被动态创建的可以记录外部变量的函数。
+- a和b是函数，也是闭包。调用它们时，就会计算外部参数num1与num2的和。
+
 
 参考文献:
 
