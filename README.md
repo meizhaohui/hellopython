@@ -12,6 +12,7 @@ Docs build status:  [![Documentation Status](https://readthedocs.org/projects/he
 - [Built-in data structure](./source/built-in_data_structure.rst)
 - [Control Workflow](./source/control_workflow.rst)
 - [Function](./source/function.rst)
+- [Function Decorator](./source/decorator.rst)
 - [System module](./source/system_module.rst)
 - [OS module](./source/os_module.rst) 
 - [String](./source/str.rst)

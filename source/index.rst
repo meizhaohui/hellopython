@@ -20,6 +20,7 @@ Welcome to hellopython's documentation!
     built-in_data_structure
     control_workflow
     function
+    decorator
     system_module
     os_module 
     str
