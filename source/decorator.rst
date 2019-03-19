@@ -352,7 +352,7 @@ logit是一个装饰器，它把执行真正业务逻辑的函数func包裹在�
 -------------------------
 
 内置的装饰器和普通的装饰器原理是一样的，只不过返回的不是函数，而是类对象，所以更难理解一些。
-如@property，@staticmethod，@classmethod，后续补充。
+如@property，@staticmethod，@classmethod，具体可参见面向对象编程章节。
 
 参考文献：
 
