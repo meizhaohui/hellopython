@@ -1,7 +1,7 @@
 # hellopython
 Recording the process of learning Python, You can visit the Docs link: https://hellopython.readthedocs.io/zh_CN/latest/
 
-Docs build status:  [![Documentation Status](https://readthedocs.org/projects/hellopython/badge/?version=latest)](https://hellopython.readthedocs.io/zh_CN/latest/?badge=latest)
+iDocs build status:  [![Documentation Status](https://readthedocs.org/projects/hellopython/badge/?version=latest)](https://hellopython.readthedocs.io/zh_CN/latest/?badge=latest)
 # Contents 
 - [Introduction Python](./source/introduction_python.rst)
 - [Install Python](./source/install_python.rst)  <!-- markdown comment： link to other file in this repo -->
@@ -13,6 +13,7 @@ Docs build status:  [![Documentation Status](https://readthedocs.org/projects/he
 - [Control Workflow](./source/control_workflow.rst)
 - [Function](./source/function.rst)
 - [Function Decorator](./source/decorator.rst)
+- [Exceptions](./source/try_except_else_finally.rst)
 - [System module](./source/system_module.rst)
 - [OS module](./source/os_module.rst) 
 - [String](./source/str.rst)

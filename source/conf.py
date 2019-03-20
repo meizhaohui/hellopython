@@ -21,7 +21,7 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'hellopython'
-copyright = '2016-2018,Zhaohui Mei. All Rights Reserved.'
+copyright = '2016-2019,Zhaohui Mei. All Rights Reserved.'
 author = 'meizhaohui'
 
 # The short X.Y version

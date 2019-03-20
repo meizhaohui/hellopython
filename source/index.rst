@@ -21,6 +21,7 @@ Welcome to hellopython's documentation!
     control_workflow
     function
     decorator
+    try_except_else_finally
     system_module
     os_module 
     str
