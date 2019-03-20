@@ -527,6 +527,54 @@ Python中的None
 
 Python中非常重要的函数装饰器，后面单独分章节讲解。
 
+命名空间和作用域
+---------------------------
+
+- 一个名称在不同的使用情况下可能指代不同的事物。Python程序有各种各样的 *命名空间* ,它指的是在该程序段内一个特定的名称是独一无二的，它和其他同名的命名空间是无关的。
+- 每一个函数定义自己的命名空间。
+- 每个程序的主要部分定义了全局命名空间，在这个命名空间的变量是全局变量，全局变量推荐使用大写字母或下划线组成的字符作为变量名GLOBAL_VAR_NAME，比如：LOVE_LANG = 'Python'。
+- 在函数内部定义的变量是局部变量，推荐使用小写字母或下划线组成的字符作为变量名local_var_name，比如：this_is_a_variable = 1。
+- locals()函数返回局部命名空间内容的字典。
+- globals()函数返回全局命名空间内容的字典。
+
+示例::
+
+    #Filename:locals_globals.py
+    LOVE_LANG = 'Python'
+    def change_lang():
+        author = 'Guido van Rossum'
+        print('locals_in_function:', locals())
+        global LOVE_LANG
+        LOVE_LANG = 'GO'
+        print('globals_in_function:', globals())
+    
+    print('locals_before:', locals())
+    print('globals_before:', globals())
+    change_lang()
+    print('locals_after:', locals())
+    print('globals_after:', globals())
+   
+使用python3 locals_globals.py运行::
+
+
+    [meizhaohui@localhost ~]$ python3 locals_globals.py 
+    locals_before: {'change_lang': <function change_lang at 0x7f67f611a048>, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x7f67f60cca58>, '__builtins__': <module 'builtins' (built-in)>, '__name__': '__main__', 'LOVE_LANG': 'Python', '__cached__': None, '__spec__': None, '__doc__': None, '__file__': 'locals_globals.py', '__package__': None}
+    globals_before: {'change_lang': <function change_lang at 0x7f67f611a048>, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x7f67f60cca58>, '__builtins__': <module 'builtins' (built-in)>, '__name__': '__main__', 'LOVE_LANG': 'Python', '__cached__': None, '__spec__': None, '__doc__': None, '__file__': 'locals_globals.py', '__package__': None}
+    locals_in_function: {'author': 'Guido van Rossum'}
+    globals_in_function: {'change_lang': <function change_lang at 0x7f67f611a048>, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x7f67f60cca58>, '__builtins__': <module 'builtins' (built-in)>, '__name__': '__main__', 'LOVE_LANG': 'GO', '__cached__': None, '__spec__': None, '__doc__': None, '__file__': 'locals_globals.py', '__package__': None}
+    locals_after: {'change_lang': <function change_lang at 0x7f67f611a048>, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x7f67f60cca58>, '__builtins__': <module 'builtins' (built-in)>, '__name__': '__main__', 'LOVE_LANG': 'GO', '__cached__': None, '__spec__': None, '__doc__': None, '__file__': 'locals_globals.py', '__package__': None}
+    globals_after: {'change_lang': <function change_lang at 0x7f67f611a048>, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x7f67f60cca58>, '__builtins__': <module 'builtins' (built-in)>, '__name__': '__main__', 'LOVE_LANG': 'GO', '__cached__': None, '__spec__': None, '__doc__': None, '__file__': 'locals_globals.py', '__package__': None}
+
+对比函数执行前后的差异：
+
+.. image:: ./_static/images/locals_globals.png
+
+- 发现仅LOVE_LANG变量仅不一样，在执行函数change_lang后，LOVE_LANG从Python变成了GO。
+- 在执行函数change_lang前，locals和global获取的值是一样的。
+- 在执行函数change_lang时，locals只能获取到函数中的变量 {'author': 'Guido van Rossum'}。
+- 如果要在函数内修改全局变量值，需要先使用global LOVE_LANG 这样的方法定义全局变量。再进行赋值修改。
+
+
 参考文献:
 
 【1】python的位置参数、默认参数、关键字参数、可变参数区别 https://www.cnblogs.com/bingabcd/p/6671368.html
