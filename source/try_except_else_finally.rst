@@ -226,6 +226,8 @@ Python所有的错误都是从BaseException类派生的，内置异常见如下:
     
 怎么又出现了一个TypeError类型异常，但我们却没有捕获到，上面提示不能在int类型和字符串类型之间做除法运算。看来我们要补上这个异常的处理，获取到这个异常。
 
+- 示例2
+
 我们改一个这个脚本文件::
 
 
@@ -269,6 +271,33 @@ Python所有的错误都是从BaseException类派生的，内置异常见如下:
    程序出现异常，异常信息：被除数为0
 
 可以看出除零异常和类型异常都能正常的捕获到。
+
+- 示例3
+
+联合else和finally一起使用，修改脚本文件::
+
+    # Filename: try_except_else_finally.py
+    # Author: meizhaohui
+    def expt3(a, b):
+        try:
+            c = a/b
+            print('the value is:{}'.format(c))
+        except ZeroDivisionError:
+            print('程序出现异常，异常信息：被除数为0')
+        except TypeError:
+            print('程序出现异常，异常信息：参数a或b的类型不支持，仅支持float或int类型')
+        else:
+            print('No exception')
+        finally:
+            print('always display')
+    expt3(4, 2)
+
+运行::
+
+    [meizhaohui@localhost python_scripts]$ python3 try_except_else_finally.py 
+    the value is:2.0
+    No exception
+    always display
 
 参考文献:
 
