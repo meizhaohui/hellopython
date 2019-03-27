@@ -5,15 +5,27 @@
 
 .. contents:: 目录
 
-模块基本介绍
+模块与包基本介绍
 ----------------------
-- 模块是可被重用的代码文件；模块文件名必须以.py结尾；模块可以从其他程序输入以便利用它的功能。
+- 模块是可被重用的代码文件
+- 模块文件名必须以.py结尾，一个模块仅仅是Python代码的一个文件
+- 模块可以从其他程序输入以便利用它的功能
+- 引用其他模块的代码时使用import语句，被引用模块中的代码和变量对该程序可见
+- 模块是不带.py扩展的另外一个Python文件名
+- 可以在函数内部调用import语句导入模块，也可以把所有的import语句都放在文件的开头，使代码之间的依赖关系清晰
+- 如果被导入的代码被多次引用，就应该考虑在函数外部导入；如果被导入的代码使用有限，就在函数内部导入
+- 可以使用别名导入模块
+- 模块搜索路径存储在sys.path中
+- 为了使Python应用更具有可扩展性，可以把多个模块组织成文件层次，称之为包
+- 包可以理解为将多个模块放在一个文件夹里面，这个文件夹名就可以称为包名，并在这个文件夹下面添加一个__init__.py文件，表示把该目录作为一个包
 
 引用模块语法::
     
     import module_name
+    import module_name as alias_name
     from module_name import *
     from module_name import fun_name
+    from module_name import fun_name as alias_name
     from module_name import var_name
     
 tab键的使用
