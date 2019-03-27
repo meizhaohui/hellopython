@@ -497,3 +497,149 @@ collections模块下的OrderedDict实现了对字典中元素的排序；由于�
     OrderedDict([('a', 1), ('c', 2), ('b', 3), ('d', 4)])
 
 
+常用内建模块之defaultdict字典缺省默认值
+-------------------------------------------
+
+在Python中如果访问字典中不存在的键，则会引发KeyError异常。
+
+示例::
+
+    In [1]: dict1={'a':1,'b':2}                                                                   
+                                                                                                  
+    In [2]: dict1['a']                                                                            
+    Out[2]: 1                                                                                     
+                                                                                                  
+    In [3]: dict1['b']                                                                            
+    Out[3]: 2                                                                                     
+                                                                                                  
+    In [4]: dict1['c']                                                                            
+    ---------------------------------------------------------------------------                   
+    KeyError                                  Traceback (most recent call last)                   
+    <ipython-input-4-6bf0c4d0a790> in <module>                                                    
+    ----> 1 dict1['c']                                                                            
+                                                                                                  
+    KeyError: 'c'                                                                                 
+
+
+访问dict1['c']时提示'c'键不存在。
+
+
+假设我有下面这样的一段文章需要统计每个单词的数量::
+
+    This module implements specialized container datatypes providing
+    alternatives to Python's general purpose built-in containers, dict,
+    list, set, and tuple.
+
+    * namedtuple   factory function for creating tuple subclasses with named fields
+    * deque        list-like container with fast appends and pops on either end
+    * ChainMap     dict-like class for creating a single view of multiple mappings
+    * Counter      dict subclass for counting hashable objects
+    * OrderedDict  dict subclass that remembers the order entries were added
+    * defaultdict  dict subclass that calls a factory function to supply missing values
+    * UserDict     wrapper around dictionary objects for easier dict subclassing
+    * UserList     wrapper around list objects for easier list subclassing
+    * UserString   wrapper around string objects for easier string subclassing
+
+- 不使用defaultdict，按普通的字典统计方式进行统计，在单词第一次统计的时候，在counts中相应的键存下默认值1。这需要在处理的时候添加一个判断语句。
+
+代码如下::
+
+    # Filename: defaultdict_count_word.py
+    # Author: meizhaohui
+
+    def count_words(article):
+        # replace \n to space,then split to list
+        article_list = article.replace('\n',' ').split()
+        counts = {}
+        for word in article_list:
+            if word not in counts:
+                counts[word] = 1
+            else:
+                counts[word] += 1
+        print(counts)
+        
+        
+    if __name__ == '__main__':
+        article='''This module implements specialized container datatypes providing
+    alternatives to Python's general purpose built-in containers, dict,
+    list, set, and tuple.
+
+    * namedtuple   factory function for creating tuple subclasses with named fields
+    * deque        list-like container with fast appends and pops on either end
+    * ChainMap     dict-like class for creating a single view of multiple mappings
+    * Counter      dict subclass for counting hashable objects
+    * OrderedDict  dict subclass that remembers the order entries were added
+    * defaultdict  dict subclass that calls a factory function to supply missing values
+    * UserDict     wrapper around dictionary objects for easier dict subclassing
+    * UserList     wrapper around list objects for easier list subclassing
+    * UserString   wrapper around string objects for easier string subclassing
+
+    '''
+        count_words(article)
+        
+运行::
+
+    $ python defaultdict_count_word.py                                                                                      
+    {'This': 1, 'module': 1, 'implements': 1, 'specialized': 1, 'container': 2, 'datatypes': 1, 'providing': 1, 'alternative
+    s': 1, 'to': 2, "Python's": 1, 'general': 1, 'purpose': 1, 'built-in': 1, 'containers,': 1, 'dict,': 1, 'list,': 1, 'set
+    ,': 1, 'and': 2, 'tuple.': 1, '*': 9, 'namedtuple': 1, 'factory': 2, 'function': 2, 'for': 6, 'creating': 2, 'tuple': 1,
+     'subclasses': 1, 'with': 2, 'named': 1, 'fields': 1, 'deque': 1, 'list-like': 1, 'fast': 1, 'appends': 1, 'pops': 1, 'o
+    n': 1, 'either': 1, 'end': 1, 'ChainMap': 1, 'dict-like': 1, 'class': 1, 'a': 2, 'single': 1, 'view': 1, 'of': 1, 'multi
+    ple': 1, 'mappings': 1, 'Counter': 1, 'dict': 4, 'subclass': 3, 'counting': 1, 'hashable': 1, 'objects': 4, 'OrderedDict
+    ': 1, 'that': 2, 'remembers': 1, 'the': 1, 'order': 1, 'entries': 1, 'were': 1, 'added': 1, 'defaultdict': 1, 'calls': 1
+    , 'supply': 1, 'missing': 1, 'values': 1, 'UserDict': 1, 'wrapper': 3, 'around': 3, 'dictionary': 1, 'easier': 3, 'subcl
+    assing': 3, 'UserList': 1, 'list': 2, 'UserString': 1, 'string': 2}                                                     
+                                                                                                                        
+                                                                                                                        
+- 使用defaultdict，不需要对键进行判断，直接添加。
+
+代码如下::
+
+    # Filename: defaultdict_count_word.py
+    # Author: meizhaohui
+
+    def count_words(article):
+        from collections import defaultdict as dt
+        # replace \n to space,then split to list
+        article_list = article.replace('\n',' ').split()
+        # counts = {}
+        counts = dt(int)
+        for word in article_list:
+            # if word not in counts:
+            #     counts[word] = 1
+            # else:
+            #     counts[word] += 1
+            counts[word] += 1
+        print(counts)
+        
+        
+    if __name__ == '__main__':
+        article='''This module implements specialized container datatypes providing
+    alternatives to Python's general purpose built-in containers, dict,
+    list, set, and tuple.
+    
+    * namedtuple   factory function for creating tuple subclasses with named fields
+    * deque        list-like container with fast appends and pops on either end
+    * ChainMap     dict-like class for creating a single view of multiple mappings
+    * Counter      dict subclass for counting hashable objects
+    * OrderedDict  dict subclass that remembers the order entries were added
+    * defaultdict  dict subclass that calls a factory function to supply missing values
+    * UserDict     wrapper around dictionary objects for easier dict subclassing
+    * UserList     wrapper around list objects for easier list subclassing
+    * UserString   wrapper around string objects for easier string subclassing
+
+    '''
+        count_words(article)
+        
+运行::
+
+    $ python defaultdict_count_word.py
+    defaultdict(<class 'int'>, {'This': 1, 'module': 1, 'implements': 1, 'specialized': 1, 'container': 2, 'datatypes': 1, 'providing': 1, 'alternatives': 1, 'to': 2, "Python's": 1, 'general': 1, 'purpose': 1, 'built-in': 1, 'containers,': 1, 'dict,': 1, 'list,': 1, 'set,': 1, 'and': 2, 'tuple.': 1, '*': 9, 'namedtuple': 1, 'factory': 2, 'function': 2, 'for': 6, 'creating': 2, 'tuple': 1, 'subclasses': 1, 'with': 2, 'named': 1, 'fields': 1, 'deque': 1, 'list-like': 1, 'fast': 1, 'appends': 1, 'pops': 1, 'on': 1, 'either': 1, 'end': 1, 'ChainMap': 1, 'dict-like': 1, 'class': 1, 'a': 2, 'single': 1, 'view': 1, 'of': 1, 'multiple': 1, 'mappings': 1, 'Counter': 1, 'dict': 4, 'subclass': 3, 'counting': 1, 'hashable': 1, 'objects': 4, 'OrderedDict': 1, 'that': 2, 'remembers': 1, 'the': 1, 'order': 1, 'entries': 1, 'were': 1, 'added': 1, 'defaultdict': 1, 'calls': 1, 'supply': 1, 'missing': 1, 'values': 1, 'UserDict': 1, 'wrapper': 3, 'around': 3, 'dictionary': 1, 'easier': 3, 'subclassing': 3, 'UserList': 1, 'list': 2, 'UserString': 1, 'string': 2})
+
+
+上面示例中defaultdict使用int给不存在的键设定默认值为int类型的默认值0，counts[word] += 1 实质上是先给counts[word]赋值0，遇到重复的单词的话就加1。使用这种方式不需要再进行判断。
+
+注：上面的例子并没有对标点符号进行再进一步的处理，只是粗略的计算了一下单词量。
+
+defaultdict可以使用int,list,dict等的默认值作为期字典缺省默认值。
+
