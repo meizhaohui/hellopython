@@ -153,6 +153,72 @@ collections模块在这些内置数据类型的基础上，提供了几个额外
     >>> deque
     deque([], maxlen=5)
 
+常用内建模块之计数器Counter
+-----------------------------------
+
+- Counter类的目的是用来跟踪值出现的次数。它是一个无序的容器类型，以字典的键值对形式存储，其中元素作为key，其计数作为value。
+- Counter() 创建一个空的Counter()类对象。
+- Counnter(iterable):从一个可iterable对象（list、tuple、dict、字符串等）创建Counter对象。
+- 当所访问的键不存在时，返回0，而不是KeyError；否则返回它的计数。
+- 函数most_common([num])以降序返回所有元素，如果指定num值，则返回该数字个数值对。
+- 函数elements()返回一个迭代器。元素被重复了多少次，在该迭代器中就包含多少个该元素。元素排列无确定顺序。
+
+示例::
+
+    In [1]: list1 = ['a', 'b', 'c', 'd', 'a', 'b', 'a', 'c']                                
+                                                                                            
+    In [2]: list1                                                                           
+    Out[2]: ['a', 'b', 'c', 'd', 'a', 'b', 'a', 'c']                                        
+                                                                                            
+    In [3]: from collections import Counter as ct                                           
+                                                                                            
+    In [4]: ct(list1)                                                                       
+    Out[4]: Counter({'a': 3, 'b': 2, 'c': 2, 'd': 1})                                       
+                                                                                            
+    In [5]: a = ct(list1)                                                                   
+                                                                                            
+    In [6]: a                                                                               
+    Out[6]: Counter({'a': 3, 'b': 2, 'c': 2, 'd': 1})                                       
+                                                                                            
+    In [7]: a.most_common()                                                                 
+    Out[7]: [('a', 3), ('b', 2), ('c', 2), ('d', 1)]                                        
+                                                                                            
+    In [8]: a.most_common(2)                                                                
+    Out[8]: [('a', 3), ('b', 2)]                                                            
+                                                                                            
+    In [9]: a.most_common(1)                                                                
+    Out[9]: [('a', 3)]                                                                      
+                                                                                            
+    In [10]: a.values()                                                                     
+    Out[10]: dict_values([3, 2, 2, 1])                                                      
+                                                                                            
+    In [11]: a.items()                                                                      
+    Out[11]: dict_items([('a', 3), ('b', 2), ('c', 2), ('d', 1)])                           
+
+    In [12]: a.elements()
+    Out[12]: <itertools.chain at 0x19918ddfeb8>
+
+    In [13]: a.elements
+    Out[13]: <bound method Counter.elements of Counter({'a': 3, 'b': 2, 'c': 2, 'd': 1})>
+    
+    In [14]: a['a']
+    Out[14]: 3
+
+    In [15]: a['b']
+    Out[15]: 2
+
+    In [16]: a['e']
+    Out[16]: 0
+    
+    In [17]: list(a.elements())
+    Out[17]: ['a', 'a', 'a', 'b', 'b', 'c', 'c', 'd']
+
+    In [18]: ct.
+                 clear()       fromkeys()    keys()        pop()         subtract()
+                 copy()        get()         most_common() popitem()     update()
+                 elements()    items()       mro()         setdefault()  values()
+                 
+                 
 常用内建模块之命名元组namedtuple
 -------------------------------------------
 
