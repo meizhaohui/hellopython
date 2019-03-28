@@ -17,6 +17,7 @@ iDocs build status:  [![Documentation Status](https://readthedocs.org/projects/h
 - [System module](./source/system_module.rst)
 - [OS module](./source/os_module.rst) 
 - [String](./source/str.rst)
+- [Itertools iterable](./source/itertools_module.rst)
 - [Read file](./source/file_read_write.rst)
 - [Collections module](./source/collections_module.rst)
 - [Regular Expression module](./source/re_module.rst) 

@@ -23,8 +23,9 @@ Welcome to hellopython's documentation!
     decorator
     try_except_else_finally
     system_module
-    os_module 
+    os_module
     str
+    itertools_module
     file_read_write
     collections_module
     re_module
