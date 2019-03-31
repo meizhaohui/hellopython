@@ -470,10 +470,222 @@ class_static_method.py代码如下::
 *    尽可能多地使用数字、字符串、元组、列表、集合以及字典。
 *    多看看容器库提供的类型，尤其是双端队列(from collections import deque)。
 
-         
+魔法方法magic method
+-----------------------------------
+
+- 在Python中，所以以双下划线(__)开头和结束的方法都是魔法方法，比如构造方法__init__。
+- 在类中巧妙地使用魔法方法可以构造出非常优美的代码。
+- 每个魔法方法都是在对内建方法的重写，类似于装饰器的行为。
+- __init__是构造方法，不能返回None外的任何返回值。
+- __new__创建类，并返回类的实例，不常用。
+- __str__实现类到字符串的转化,相当于str()方法,可读性更强，让人更好理解。
+- __repr__实现类到字符串的转化,相当于repr()方法，便于调试，让机器更容易理解。
+- __del__析构方法，在对象的生命周期结束时调用。
+- __len__定义当len(class_instance)被调用时的行为。
+- __eq__(self, other) 定义等于号的行为，self = other。
+- __ne__(self, other) 定义不等号的行为，self != other。
+- __lt__(self, other) 定义小于号的行为，self < other。
+- __le__(self, other) 定义小于等于号的行为，self <= other。
+- __gt__(self, other) 定义大于号的行为，self > other。
+- __ge__(self, other) 定义大于等于号的行为，self >= other。
+- __add__(self, other) 定义加法的行为，self + other。
+- __sub__(self, other) 定义减法的行为，self - other。
+- __mul__(self, other) 定义乘法的行为，self \* other。
+- __truediv__(self, other) 定义真除法的行为，self / other。
+- __floordiv__(self, other) 定义整数除法的行为，self // other。
+- __mod__(self, other) 定义取模算法的行为，self % other。
+- __pow__(self, other) 定义幂指数pow()或\*\*运算时的行为，self \*\* other。
+- __add__(self, other) 定义加法的行为，self + other。
+- __add__(self, other) 定义加法的行为，self + other。
+- __call__(self, \*args, \*\*kwargs) 实现__call__后，可以将类实例当做函数一样的去使用，称为仿函数或函数对象，实例对象()就是调用__call__方法。
+
+示例::
 
 
+    #!/usr/bin/python3
+    """
+    @Time    : 2019/3/31
+    @Author  : Mei Zhaohui
+    @Email   : mzh.whut@gmail.com
+    @Filename: magic_methods.py
+    @Software: PyCharm
+    @Desc    : Magic method
+    """
+    
+    
+    class Word:
+        """class word"""
+    
+        def __new__(cls, *args, **kwargs):
+            """
+            创建类，并返回类的实例，在创建类的对象时__new__方法首先被调用，然后再调用__init__方法
+            在创建一个类的对象实例对象时，__new__必定会被调用，而__init__则不一定（pickle.load方式反序列化一个实例时不会调用）
+            __new__方法需要返回该类的一个实例
+            """
+            print('Call __new__ method')
+            return object.__new__(cls)
+    
+        def __init__(self, text):
+            """
+            可以理解__new__与__init__方法共同构成了构造函数
+            __init__不能返回除None外的任何值
+            __init__不需要指定return语句，直接隐式return None即可
+            """
+            print('Call __init__ method')
+            self.__text = text
+    
+        def __del__(self):
+            """
+            析构函数
+            在对象的生命周期结束时，__del__会被调用，可以将__del__理解为析构函数
+            __del__定义的是当一个对象进行垃圾回收时候的行为
+            x.__del__()并不是对del x的实现，但执行del x时会调用x.__del__()
+            """
+            print('Call __del__ method, {} will be deleted.'.format(self))
+    
+        def __str__(self):
+            """
+            实现类到字符串的转化，将一个类的实例变成字符串
+            如果不定义__str__,则Python会去调用__repr__方法
+            如果__repr__方法也找不到的话，则会将返回类的名称以及对象的内在地址
+            如： Word: <__main__.Word object at 0x7efe3ad5fe48>
+            __str__的返回结果可读性更强
+            """
+            print('Call __str__ method')
+            # self.__class__.__name__ 代表着类的名称
+            return '({}:{})'.format(self.__class__.__name__, self.__text)
+    
+        def __repr__(self):
+            """
+            实现类到字符串的转化，将一个类的实例变成字符串
+            推荐每一个类至少添加__repr__方法，这样可以保证类到字符串的转化时始终有一个有效的转化方式
+            """
+            print('Call __repr__ method')
+            return '({}:{})'.format(self.__class__.__name__, self.__text)
+    
+        def __len__(self):
+            """
+            定义当len(class_instance)被调用时的行为
+            """
+            print('Call __len__ method')
+            return len(self.__text.replace(',', '').replace(' ', ''))
+    
+        def __add__(self, other):
+            """
+            two class instance add
+            :param other: other class instance
+            """
+            print('Call __add__ method')
+            return self.__text + ' and ' + other.__text
+    
+        def __eq__(self, other):
+            """
+            two class instance equal
+            :param other: other class instance
+            """
+            print('Call __eq__ method')
+            return self.__text.lower() == other.__text.lower()
+    
+        def __call__(self, text):
+            """
+            override () , class instance function
+            replace the instance self to text
+            """
+            print('Call __call__ method')
+            self.__text = text
+            return self.__text
+    
+    
+    def main():
+        """main function"""
+        print('创建对象实例,将会调用__new__和__init__方法：')
+        word1 = Word('I love Python')
+        print('打印对象实例，将会调用__str__方法：')
+        print('Word:', word1)
+        print('=' * 30)
+        print('调用__repr__方法：')
+        print(repr(word1))
+        print('调用__len__方法：')
+        print(len(word1))
+        print('创建对象实例,将会调用__new__和__init__方法：')
+        word2 = Word('I love Go')
+        print('调用__add__方法：')
+        print(word1 + word2)
+        print('创建对象实例,将会调用__new__和__init__方法：')
+        word3 = Word('I LOVE PYTHON')
+        print('调用__eq__方法：')
+        print(word1 == word3)
+        print('创建对象实例,将会调用__new__和__init__方法：')
+        word4 = Word('I am the __call__ before')
+        print('调用__call__方法：')
+        word4('I am the __call__ after')
+        print('=' * 30)
+        print('调用__del__方法，类对象并没有被删除：')
+        word1.__del__()
+        print('打印对象实例，将会调用__str__方法：')
+        print('Word:', word1)
+        print('使用del删除对象时，会调用__del__方法，类对象并没有被删除：')
+        del word1
+        print('程序运行完成后，会自动删除对象，结束对象的生命周期!')
+    
+    
+    if __name__ == '__main__':
+        main()
 
+运行结果::
 
+    创建对象实例,将会调用__new__和__init__方法：
+    Call __new__ method
+    Call __init__ method
+    打印对象实例，将会调用__str__方法：
+    Word: Call __str__ method
+    (Word:I love Python)
+    ==============================
+    调用__repr__方法：
+    Call __repr__ method
+    (Word:I love Python)
+    调用__len__方法：
+    Call __len__ method
+    11
+    创建对象实例,将会调用__new__和__init__方法：
+    Call __new__ method
+    Call __init__ method
+    调用__add__方法：
+    Call __add__ method
+    I love Python and I love Go
+    创建对象实例,将会调用__new__和__init__方法：
+    Call __new__ method
+    Call __init__ method
+    调用__eq__方法：
+    Call __eq__ method
+    True
+    创建对象实例,将会调用__new__和__init__方法：
+    Call __new__ method
+    Call __init__ method
+    调用__call__方法：
+    Call __call__ method
+    ==============================
+    调用__del__方法，类对象并没有被删除：
+    Call __str__ method
+    Call __del__ method, (Word:I love Python) will be deleted.
+    打印对象实例，将会调用__str__方法：
+    Word: Call __str__ method
+    (Word:I love Python)
+    使用del删除对象时，会调用__del__方法，类对象并没有被删除：
+    Call __str__ method
+    Call __del__ method, (Word:I love Python) will be deleted.
+    程序运行完成后，会自动删除对象，结束对象的生命周期!
+    Call __str__ method
+    Call __del__ method, (Word:I love Go) will be deleted.
+    Call __str__ method
+    Call __del__ method, (Word:I LOVE PYTHON) will be deleted.
+    Call __str__ method
+    Call __del__ method, (Word:I am the __call__ after) will be deleted.
 
-                           
+参考文献:
+
+- `Special method names <https://docs.python.org/3/reference/datamodel.html#special-method-names>`_
+- `介绍Python的魔术方法 - Magic Method <https://segmentfault.com/a/1190000007256392#articleHeader1>`_
+- `理解python的metaclass <https://segmentfault.com/a/1190000007255412>`_
+- `Python 中的 __str__ 与 __repr__ 到底有什么差别 <http://baijiahao.baidu.com/s?id=1596817611604972751&wfr=spider&for=pc>`_
+
