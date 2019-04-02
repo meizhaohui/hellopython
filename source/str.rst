@@ -880,6 +880,7 @@ python字符串有以下方法::
                                 
 格式化类
 ----------------------
+
 格式化的方法如下::
 
     str.format(*args, **kwargs)    format方法被用于字符串的格式化输出
@@ -1132,3 +1133,88 @@ python字符串有以下方法::
                                 >>> str3 = byte_code2.decode('gb2312')
                                 >>> str3
                                 '我爱python'
+
+
+python string模块
+-------------------------------
+
+- python string模块预定义了一些可供我们测试用的字符串常量。
+
+string模块的方法或属性::
+
+    In [1]: import string
+
+    In [2]: string?                                                                                                                       
+    Type:        module
+    String form: <module 'string' from '/usr/lib/python3.5/string.py'>
+    File:        /usr/lib/python3.5/string.py
+    Docstring:  
+    A collection of string constants.
+    
+    Public module variables:
+    
+    whitespace -- a string containing all ASCII whitespace
+    ascii_lowercase -- a string containing all ASCII lowercase letters
+    ascii_uppercase -- a string containing all ASCII uppercase letters
+    ascii_letters -- a string containing all ASCII letters
+    digits -- a string containing all ASCII decimal digits
+    hexdigits -- a string containing all ASCII hexadecimal digits
+    octdigits -- a string containing all ASCII octal digits
+    punctuation -- a string containing all ASCII punctuation characters
+    printable -- a string containing all ASCII characters considered printable
+    
+    In [3]: string.
+                    ascii_letters   capwords        hexdigits       punctuation
+                    ascii_lowercase digits          octdigits       Template
+                    ascii_uppercase Formatter       printable       whitespace
+
+string模块的使用::
+
+    In [1]: import string                                                           
+    
+    In [2]: string.ascii_letters                                                                                                           
+    Out[2]: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    
+    In [3]: string.ascii_lowercase                                                                                                         
+    Out[3]: 'abcdefghijklmnopqrstuvwxyz'
+    
+    In [4]: string.ascii_uppercase                                                                                                         
+    Out[4]: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    
+    In [5]: string.capwords                                                                                                                
+    Out[5]: <function string.capwords(s, sep=None)>
+    
+    In [6]: string.capwords('word')                                                                                                        
+    Out[6]: 'Word'
+    
+    In [7]: string.digits                                                                                                                  
+    Out[7]: '0123456789'
+    
+    In [8]: string.Formatter                                                                                                               
+    Out[8]: string.Formatter
+    
+    In [9]: string.hexdigits                                                                                                               
+    Out[9]: '0123456789abcdefABCDEF'
+    
+    In [10]: string.octdigits                                                                                                              
+    Out[10]: '01234567'
+    
+    In [11]: string.printable                                                                                                              
+    Out[11]: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c'
+    
+    In [12]: string.punctuation                                                                                                            
+    Out[12]: '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+    
+    In [13]: string.Template                                                                                                               
+    Out[13]: string.Template
+    
+    In [14]: string.whitespace                                                                                                             
+    Out[14]: ' \t\n\r\x0b\x0c'
+
+    In [15]: s = string.Template('$who like $what')                                                                                        
+    In [16]: s.substitute(who='I',what='Python')                                                                                           
+    Out[16]: 'I like Python'
+    
+    In [17]: s.safe_substitute(who='I')                                                                                                    
+    Out[17]: 'I like $what'
+
