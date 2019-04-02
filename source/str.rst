@@ -5,6 +5,112 @@ python字符串处理
 
 .. contents:: 目录
 
+python字符串
+-------------------------------
+
+- Python3中字符串是Unicode字符串而不是数组，这是与Python2相比最大的区别。
+- Python2中需要区分普通的以字节为单位的字符串以及Unicode字符串。
+- Python标准文本编码格式是UTF-8，这种编码方式简单快速，字符覆盖面广，出错率低。
+- UTF-8动态编码方案：
+
+  #. 为ASCII字符分配1字节；
+  #. 为拉丁语系(除西里尔语)的语言分配2字节；
+  #. 为其他的位于基本多语言平面的字符分配3字节；
+  #. 为剩下的字符集分配4字节，这包括一些亚洲语言及符号。
+
+- 如果你知道某个字符的Unicode ID，可以直接在Python字符串中引用这个ID获取对应字符。
+- 可以使用\N{name}来引用某一字符，其中name为该字符的标准名称，在 `Unicode字符名称索引页 <https://www.unicode.org/charts/charindex.html>`_ 可以查到字符对应的标准名称。
+- Python中的unicodedata模块提供了下面两个方向的转换函数：
+
+  #. lookup() 接受不区分大小写的标准名称，返回一个Unicode字符。
+  #. name() 接受一个Unicode字符，返回大写形式的名称。
+
+从官网截取的部分字符标准名称对照表::
+
+
+       Unicode® Character Name Index
+    A
+    Name, Alias, or Category	Chart Link
+    A WITH ACUTE, LATIN CAPITAL LETTER	00C1
+    A WITH ACUTE, LATIN SMALL LETTER	00E1
+    A WITH BREVE, LATIN SMALL LETTER	0103
+    A WITH CARON, LATIN SMALL LETTER	01CE
+    A WITH CIRCUMFLEX, LATIN CAPITAL LETTER	00C2
+    A WITH CIRCUMFLEX, LATIN SMALL LETTER	00E2
+    A WITH DIAERESIS, LATIN CAPITAL LETTER	00C4
+    A WITH DIAERESIS, LATIN SMALL LETTER	00E4
+    A WITH DOT ABOVE, LATIN SMALL LETTER	0227
+    A WITH DOT BELOW, LATIN SMALL LETTER	1EA1
+    A WITH DOUBLE GRAVE, LATIN SMALL LETTER	0201
+    A WITH GRAVE, LATIN CAPITAL LETTER	00C0
+
+说明: 为了方便查阅，Unicode字符名称索引页列出的字符名称是经过修改的，因此与由unicodedata.name()得到的名称有所不同，如果需要将它们转换为真实的Unicode名称(Python使用的)，只需要将逗号舍去，并将逗号后面的内容移动到最前面即可。
+
+unicodedata模块属性或方法::
+
+    In [1]: import unicodedata                                                      
+    
+    In [2]: unicodedata. 
+      bidirectional()    decomposition()    mirrored()         UCD               
+      category()         digit()            name()             ucd_3_2_0         
+      combining()        east_asian_width() normalize()        ucnhash_CAPI      
+      decimal()          lookup()           numeric()          unidata_version    
+
+    In [3]: unicodedata.lookup('A WITH ACUTE, LATIN CAPITAL LETTER')               
+    ---------------------------------------------------------------------------
+    KeyError                                  Traceback (most recent call last)
+    <ipython-input-11-1bf6d86503ae> in <module>
+    ----> 1 unicodedata.lookup('A WITH ACUTE, LATIN CAPITAL LETTER')
+    
+    KeyError: "undefined character name 'A WITH ACUTE, LATIN CAPITAL LETTER'"
+    
+    In [4]: unicodedata.lookup('LATIN CAPITAL LETTER A WITH ACUTE')                
+    Out[4]: 'Á'
+
+
+unicodedata模块的使用，check_unicode函数接受一个Unicode字符，查找它们对应的名称，再用这个名称查找对应的Unicode字符::
+
+    In [1]: import unicodedata                                                      
+    
+    In [2]: def check_unicode(value): 
+       ...:     name = unicodedata.name(value)  # 查找字符的名称 
+       ...:     value2 = unicodedata.lookup(name)   # 查找名称对应的Unicode字符
+       ...:     print('value="{}",name="{}",value2="{}"'.format(value, name, value2)
+       ...: ) 
+       ...:                                                                         
+    
+    In [3]: check_unicode('A')  # 纯ASCII字符
+    value="A",name="LATIN CAPITAL LETTER A",value2="A"
+    
+    In [4]: check_unicode('$')  # ASCII标点符号
+    value="$",name="DOLLAR SIGN",value2="$"
+    
+    In [5]: check_unicode('\u00a2')  # Unicode货币字符
+    value="¢",name="CENT SIGN",value2="¢"
+    
+    In [6]: check_unicode('\u20ac')  # 欧元符号 
+    value="€",name="EURO SIGN",value2="€"
+    
+    In [7]: check_unicode('\uffe5')  # 中国货币人民币元
+    value="￥",name="FULLWIDTH YEN SIGN",value2="￥"
+    
+    In [8]: check_unicode('\u2630')  # 特殊符号 
+    value="☰",name="TRIGRAM FOR HEAVEN",value2="☰"
+    
+    In [9]: check_unicode('\u2603')  # SNOWMAN字符 
+    value="☃",name="SNOWMAN",value2="☃"
+
+    In [10]: check_unicode('\u00e9') # 拉丁字母é
+    value="é",name="LATIN SMALL LETTER E WITH ACUTE",value2="é"
+
+
+python编码encode和解码decode
+-------------------------------
+
+- 编码是将字符串转化为一系列字节的过程。
+- 解码是将字节序列转化为Unicode字符串的过程。
+
+
 python字符串处理的常用方法
 -------------------------------
 
@@ -984,6 +1090,10 @@ python字符串有以下方法::
                                 
 编码类
 -----------------
+
+- 编码是将字符串转化为一系列字节的过程。
+- 解码是将字节序列转化为Unicode字符串的过程。
+
 编码的方法如下::
 
     str.encode(encoding='utf-8', errors='strict')  按某种encoding格式进行编码，返回一个字节流bytes对象
