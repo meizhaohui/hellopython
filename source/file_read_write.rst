@@ -7,7 +7,7 @@
 
 文件读写内置方法open
 ----------------------
-- 使用内置方法<built-in function open>对文件进行读写。
+- 使用内置方法 ``<built-in function open>`` 对文件进行读写。
 
 常用方法如下::
 
@@ -193,7 +193,7 @@
     >>> file_object.closed                    # 判断文件对象是否关闭
     True
 
-**注意：readlines() 读取所有行的内容至内存中，内存占用率过高；readline()每次读取一行，对于大文件需要综合考虑做出取舍。**
+注意： ``readlines()`` 读取所有行的内容至内存中，内存占用率过高； ``readline()`` 每次读取一行，对于大文件需要综合考虑做出取舍。
     
 文件的读写模式
 ----------------------
@@ -304,4 +304,17 @@ with上下文管理器的使用
             print(line)
             
 
-**对于一些特殊类型的文件，可以使用相应的模块进行读取。如json模块可以读取json文件，logging模块读取日志文件，xml.etree.ElementTree读取xml文件，csv模块读取CSV文件，ConfigParser模块读取配置文件等。**
+对于一些特殊类型的文件，可以使用相应的模块进行读取。如 ``json`` 模块可以读取json文件， ``logging`` 模块读取日志文件， ``xml.etree.ElementTree`` 读取xml文件， ``csv`` 模块读取CSV文件， ``ConfigParser`` 模块读取配置文件等。
+
+csv模块
+------------------------
+
+csv模块的方法或属性::
+
+    In [1]: import csv                                                              
+    
+    In [2]: csv. 
+           Dialect              excel                list_dialects()      QUOTE_NONNUMERIC     Sniffer              writer()            
+           DictReader           excel_tab            QUOTE_ALL            re                   StringIO                                 
+           DictWriter           field_size_limit()   QUOTE_MINIMAL        reader()             unix_dialect                             
+           Error                get_dialect()        QUOTE_NONE           register_dialect()   unregister_dialect()                        
