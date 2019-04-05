@@ -293,7 +293,7 @@
 with上下文管理器的使用
 ------------------------
 
-使用with...open方式打开文件::
+使用 ``with...open`` 方式打开文件::
     
     # 使用with...open方式打开文件，不用考虑再去关闭文件
     with open('D:\\test1.txt',mode='a+',encoding='utf-8') as file1:
@@ -309,6 +309,18 @@ with上下文管理器的使用
 csv模块
 ------------------------
 
+- csv模块实现了以csv格式读取和写入表格数据的类。
+- csv模块可以读取EXCEL数据和写入数据到EXCEL文件。
+- csv模块 ``read`` 和 ``writer`` 对象可以写读序列。
+- csv模块 ``DictReader`` 和 ``DictWriter`` 类可以读写字典形式的数据。
+- csvwriter_object.writerows(rows)将rows对象的所有元素写入文件，相当于一次写入多行到文件。
+- csvwriter_object.writerow(row)将row参数的元素写入文件，相当于写入一行到文件。
+- csvwriter_object.writeheader()将构建方法中定义的字段名称写入到文件中作为CSV文件的表头。
+- csv.reader(csvfile)读取csv文件数据。
+- 使用reader()和write()的默认操作中，每一列使用逗号分开，每一行使用换行符分开。
+- csv.DictReader(f, fieldnames=None, restkey=None, restval=None, dialect='excel', \*args, \*\*kwds)以字典作为元素时，可以指定 ``fieldnames`` 参数，表明字典中字段的名称， ``fieldnames`` 为sequence序列，``restkey`` 参数表示当指定的字段数少于csv文件的列数时剩余的数据的列名， ``restval`` 参数表示当指定的字段数多于csv文件的列名数时，多出的字段自动插入的值。
+- csv.DictWriter(f, fieldnames, restval='', extrasaction='raise', dialect='excel', \*args, \*\*kwds)将字典列表写入到CSV文件中，``fieldnames`` sequuence序列必须指定, ``restval`` 参数用于当指定的字段数多于字典列表的键总数时自动填充的值， ``extrasaction`` 参数用于指定当字典列表的键总数超过 ``fieldnames`` 定义的字段总数时的行为，默认引发 ``ValueError`` 异常,也可以指定为 ``extrasaction='ignore'`` 表示忽略字典中的额外值。 
+
 csv模块的方法或属性::
 
     In [1]: import csv                                                              
@@ -318,3 +330,532 @@ csv模块的方法或属性::
            DictReader           excel_tab            QUOTE_ALL            re                   StringIO                                 
            DictWriter           field_size_limit()   QUOTE_MINIMAL        reader()             unix_dialect                             
            Error                get_dialect()        QUOTE_NONE           register_dialect()   unregister_dialect()                        
+
+示例1,写入列表数据到csv文件中:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 18,19
+
+    In [1]: import csv
+    
+    In [2]: CSV_DATA = [
+       ...:     ['id', 'username', 'age', 'country'],
+       ...:     ['1001', 'Stephen Curry', '30', 'USA'],
+       ...:     ['1002', 'Kobe Bryant', '40', 'USA'],
+       ...:     ['1003', 'Manu Ginóbili', '41', 'Argentina']
+       ...:     ]
+    
+    In [3]: CSV_DATA
+    Out[3]:
+    [['id', 'username', 'age', 'country'],
+     ['1001', 'Stephen Curry', '30', 'USA'],
+     ['1002', 'Kobe Bryant', '40', 'USA'],
+     ['1003', 'Manu Ginóbili', '41', 'Argentina']]
+    
+    In [4]: with open('file.csv', 'wt') as fout:
+       ...:     csvwriter_object = csv.writer(fout)
+       ...:     csvwriter_object.writerows(CSV_DATA)
+       ...:
+
+    In [5]: csvwriter_object  
+    Out[5]: <_csv.writer at 0x7fd479b0b258>
+
+查看文件file.csv数据::
+
+    [meizhaohui@localhost ~]$ cat file.csv
+    id,username,age,country
+    1001,Stephen Curry,30,USA
+    1002,Kobe Bryant,40,USA
+    1003,Manu Ginóbili,41,Argentina
+    
+示例2, 读取csv文件数据:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+
+    In [6]: with open('file.csv', 'rt') as fin:
+       ...:     csvreader_object = csv.reader(fin)
+       ...:     data = [row for row in csvreader_object]
+       ...:
+    
+    In [7]: csvreader_object
+    Out[7]: <_csv.reader at 0x7fd479b013c8>
+    
+    In [8]: data
+    Out[8]:
+    [['id', 'username', 'age', 'country'],
+     ['1001', 'Stephen Curry', '30', 'USA'],
+     ['1002', 'Kobe Bryant', '40', 'USA'],
+     ['1003', 'Manu Ginóbili', '41', 'Argentina']]
+
+示例3,将csv数据读取后保存为字典为元素的列表:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+
+    In [9]: with open('file.csv', 'rt') as fin:
+       ...:     dictreader_object = csv.DictReader(fin)
+       ...:     data_dict_list = [row for row in dictreader_object]
+       ...:
+    
+    In [10]: dictreader_object
+    Out[10]: <csv.DictReader at 0x7fd479ac7208>
+    
+    In [11]: data_dict_list
+    Out[11]:
+    [{'age': '30', 'country': 'USA', 'id': '1001', 'username': 'Stephen Curry'},
+     {'age': '40', 'country': 'USA', 'id': '1002', 'username': 'Kobe Bryant'},
+     {'age': '41',
+      'country': 'Argentina',
+      'id': '1003',
+      'username': 'Manu Ginóbili'}]
+
+说明： 此例中，因为没有在csv.DictReader(fin)中指定 ``fieldnames`` ，csv模块会自动读取第一行作为字段名称。
+
+
+示例4，指定 ``fieldnames`` 字段名称:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+
+    In [12]: with open('file.csv', 'rt') as fin:
+        ...:     dictreader_object1 = csv.DictReader(fin, fieldnames=['first','second','third','fouth'])
+        ...:     data_dict_list1 = [row for row in dictreader_object1]
+        ...:
+    
+    In [13]: dictreader_object1
+    Out[13]: <csv.DictReader at 0x7fd479c1a358>
+    
+    In [14]: data_dict_list1
+    Out[14]:
+    [{'first': 'id', 'fouth': 'country', 'second': 'username', 'third': 'age'},
+     {'first': '1001', 'fouth': 'USA', 'second': 'Stephen Curry', 'third': '30'},
+     {'first': '1002', 'fouth': 'USA', 'second': 'Kobe Bryant', 'third': '40'},
+     {'first': '1003',
+      'fouth': 'Argentina',
+      'second': 'Manu Ginóbili',
+      'third': '41'}]
+
+说明：由于指定了 ``fieldnames`` 字段名称，csv文件中第一行就当做了普通的数据行，不作为表头数据。
+
+示例5，指定 ``fieldnames`` 字段名称,但指定的字段数少于csv文件中的列数:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+
+    In [15]: with open('file.csv', 'rt') as fin:
+        ...:     dictreader_object2 = csv.DictReader(fin, fieldnames=['first','second'])
+        ...:     data_dict_list2 = [row for row in dictreader_object2]
+        ...:
+    
+    In [16]: dictreader_object2
+    Out[16]: <csv.DictReader at 0x7fd47834ea58>
+    
+    In [17]: data_dict_list2
+    Out[17]:
+    [{None: ['age', 'country'], 'first': 'id', 'second': 'username'},
+     {None: ['30', 'USA'], 'first': '1001', 'second': 'Stephen Curry'},
+     {None: ['40', 'USA'], 'first': '1002', 'second': 'Kobe Bryant'},
+     {None: ['41', 'Argentina'], 'first': '1003', 'second': 'Manu Ginóbili'}]
+
+说明:此种情况会将csv多出的数据保存在列表中，并使用 ``restkey`` 指定的字段名(默认为None)进行存储，如果非空行的字段数少于字段名，则公缺少的值填入None。由于我们并未指定 ``restkey`` 值，因此除了'first'和'second'字段名外，还有一个None字段名。
+
+示例6，指定 ``fieldnames`` 字段名称,但指定的字段数少于csv文件中的列数,但指定 ``restkey`` 值:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+    
+    In [18]: with open('file.csv', 'rt') as fin:
+        ...:     dictreader_object3 = csv.DictReader(fin, fieldnames=['first','second'], restkey='other')
+        ...:     data_dict_list3 = [row for row in dictreader_object3]
+        ...:
+    
+    In [19]: dictreader_object3
+    Out[19]: <csv.DictReader at 0x7fd479acae10>
+    
+    In [20]: data_dict_list3
+    Out[20]:
+    [{'first': 'id', 'other': ['age', 'country'], 'second': 'username'},
+     {'first': '1001', 'other': ['30', 'USA'], 'second': 'Stephen Curry'},
+     {'first': '1002', 'other': ['40', 'USA'], 'second': 'Kobe Bryant'},
+     {'first': '1003', 'other': ['41', 'Argentina'], 'second': 'Manu Ginóbili'}]
+
+说明: 此时因为指定了 ``restkey`` 参数值为'other',因此输出数据中以'first','second','other'作为字典的键。
+
+示例7，指定 ``fieldnames`` 字段名称,但指定的字段数多于csv文件中的列数:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+
+    In [21]: with open('file.csv', 'rt') as fin:
+        ...:     dictreader_object4 = csv.DictReader(fin, fieldnames=['first','second','third','fouth','fifth'])
+        ...:     data_dict_list4 = [row for row in dictreader_object4]
+        ...:
+    
+    In [22]: data_dict_list4
+    Out[22]:
+    [{'fifth': None,
+      'first': 'id',
+      'fouth': 'country',
+      'second': 'username',
+      'third': 'age'},
+     {'fifth': None,
+      'first': '1001',
+      'fouth': 'USA',
+      'second': 'Stephen Curry',
+      'third': '30'},
+     {'fifth': None,
+      'first': '1002',
+      'fouth': 'USA',
+      'second': 'Kobe Bryant',
+      'third': '40'},
+     {'fifth': None,
+      'first': '1003',
+      'fouth': 'Argentina',
+      'second': 'Manu Ginóbili',
+      'third': '41'}]
+
+说明:由于指定了5个字段名，而csv文件中只的4列，因此第5个字段'fifth'会被自动指定值为None。
+
+示例8，指定 ``fieldnames`` 字段名称,但指定的字段数多于csv文件中的列数,并指定 ``restval`` 参数:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+
+    In [23]: with open('file.csv', 'rt') as fin: 
+        ...:     dictreader_object5 = csv.DictReader(fin, fieldnames=['first','second','third','fouth','fifth'], restval='autoinsert') 
+        ...:     data_dict_list5 = [row for row in dictreader_object5] 
+        ...:
+    
+    In [24]: data_dict_list5                                                                                                               
+    Out[24]: 
+    [{'fifth': 'autoinsert',
+      'first': 'id',
+      'fouth': 'country',
+      'second': 'username',
+      'third': 'age'},
+     {'fifth': 'autoinsert',
+      'first': '1001',
+      'fouth': 'USA',
+      'second': 'Stephen Curry',
+      'third': '30'},
+     {'fifth': 'autoinsert',
+      'first': '1002',
+      'fouth': 'USA',
+      'second': 'Kobe Bryant',
+      'third': '40'},
+     {'fifth': 'autoinsert',
+      'first': '1003',
+      'fouth': 'Argentina',
+      'second': 'Manu Ginóbili',
+      'third': '41'}]
+
+
+说明:由于指定了5个字段名，并且指定了 ``restval`` 参数为'autoinsert',而csv文件中只的4列，因此第5个字段'fifth'会被自动指定值为'autoinsert'值。
+
+示例9, 使用DictWriter()重写CSV文件:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 11,12
+
+    In [25]: data_dict_list                                                                                                                
+    Out[25]: 
+    [{'age': '30', 'country': 'USA', 'id': '1001', 'username': 'Stephen Curry'},
+     {'age': '40', 'country': 'USA', 'id': '1002', 'username': 'Kobe Bryant'},
+     {'age': '41',
+      'country': 'Argentina',
+      'id': '1003',
+      'username': 'Manu Ginóbili'}]
+    
+    In [26]: with open('other.csv','wt') as fout: 
+        ...:     dictwriter_object = csv.DictWriter(fout, fieldnames=('id','username','age','country')) 
+        ...:     dictwriter_object.writerows(data_dict_list) 
+        ...:  
+
+查看other.csv文件的内容::
+
+    [meizhaohui@localhost ~]$ cat other.csv 
+    1001,Stephen Curry,30,USA
+    1002,Kobe Bryant,40,USA
+    1003,Manu Ginóbili,41,Argentina
+
+说明：发现此时只是将数据写入，但没有写入表头数据。
+
+
+示例10, 使用DictWriter()重写CSV文件,并使用 ``dictwriter_object.writeheader()``  写入表头数据:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 11,12
+
+    In [27]: data_dict_list
+    Out[27]:
+    [{'age': '30', 'country': 'USA', 'id': '1001', 'username': 'Stephen Curry'},
+     {'age': '40', 'country': 'USA', 'id': '1002', 'username': 'Kobe Bryant'},
+     {'age': '41',
+      'country': 'Argentina',
+      'id': '1003',
+      'username': 'Manu Ginóbili'}]
+    
+    In [28]: with open('other.csv','wt') as fout:
+        ...:     dictwriter_object = csv.DictWriter(fout, fieldnames=('id','username','age','country'))
+        ...:     dictwriter_object.writeheader()
+        ...:     dictwriter_object.writerows(data_dict_list)
+        ...:
+
+
+查看other.csv文件的内容::
+
+    [meizhaohui@localhost ~]$ cat other.csv
+    id,username,age,country
+    1001,Stephen Curry,30,USA
+    1002,Kobe Bryant,40,USA
+    1003,Manu Ginóbili,41,Argentina
+
+示例11, 使用DictWriter()重写CSV文件,并使用 ``dictwriter_object.writeheader()``  写入表头数据,但 ``fieldnames`` 仅指定'id'和'username'两个字段，此时会引发异常:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 17
+
+    In [29]: data_dict_list                                                                                                                
+    Out[29]: 
+    [{'age': '30', 'country': 'USA', 'id': '1001', 'username': 'Stephen Curry'},
+     {'age': '40', 'country': 'USA', 'id': '1002', 'username': 'Kobe Bryant'},
+     {'age': '41',
+      'country': 'Argentina',
+      'id': '1003',
+      'username': 'Manu Ginóbili'}]
+    
+    In [30]: with open('other.csv','wt') as fout: 
+        ...:     dictwriter_object = csv.DictWriter(fout, fieldnames=('id','username')) 
+        ...:     dictwriter_object.writeheader() 
+        ...:     dictwriter_object.writerows(data_dict_list) 
+        ...:                                                                                                                               
+    ---------------------------------------------------------------------------
+    ValueError                                Traceback (most recent call last)
+    ValueError: dict contains fields not in fieldnames: 'age', 'country'
+    
+说明：由于没有指定 ``extrasaction`` 参数，默认 ``extrasaction='raise'``,此时data_dict_list传递给dictwriter_object对象时，找不到'age'和'country'健对应的字段名称，因此会引发 ``ValueError`` 异常。下面示例指定 ``extrasaction`` 参数。
+
+
+示例12, 使用DictWriter()重写CSV文件,并使用 ``dictwriter_object.writeheader()``  写入表头数据,但 ``fieldnames`` 仅指定'id'和'username'两个字段，并指定 ``extrasaction='ignore'`` 参数:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+
+    In [31]: with open('other.csv','wt') as fout: 
+        ...:     dictwriter_object = csv.DictWriter(fout, fieldnames=('id','username'),extrasaction='ignore') 
+        ...:     dictwriter_object.writeheader() 
+        ...:     dictwriter_object.writerows(data_dict_list) 
+        ...:                                                     
+
+    In [32]: dictwriter_object
+    Out[32]: <csv.DictWriter at 0x7fd4798bd668>
+
+查看other.csv文件的内容::
+
+    meizhaohui@localhost ~]$ cat other.csv
+    id,username
+    1001,Stephen Curry
+    1002,Kobe Bryant
+    1003,Manu Ginóbili
+
+说明：通过指定 ``extrasaction='ignore'`` 参数，可以写入与字典列表长度不一致的字段数据到CSV文件中。
+
+示例12, 使用DictWriter()重写CSV文件,并使用 ``dictwriter_object.writeheader()``  写入表头数据,但 ``fieldnames`` 指定的字段数超过字典列表中的字段总数:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 11
+
+    In [33]: data_dict_list
+    Out[33]:
+    [{'age': '30', 'country': 'USA', 'id': '1001', 'username': 'Stephen Curry'},
+     {'age': '40', 'country': 'USA', 'id': '1002', 'username': 'Kobe Bryant'},
+     {'age': '41',
+      'country': 'Argentina',
+      'id': '1003',
+      'username': 'Manu Ginóbili'}]
+    
+    In [34]: with open('other.csv','wt') as fout:
+        ...:     dictwriter_object = csv.DictWriter(fout, fieldnames=('id','username','age','country','number'))
+        ...:     dictwriter_object.writeheader()
+        ...:     dictwriter_object.writerows(data_dict_list)
+        ...:
+    
+    In [35]: dictwriter_object
+    Out[35]: <csv.DictWriter at 0x7fd479b064a8>
+
+查看other.csv文件的内容::
+
+    [meizhaohui@localhost ~]$ cat other.csv 
+    id,username,age,country,number
+    1001,Stephen Curry,30,USA,
+    1002,Kobe Bryant,40,USA,
+    1003,Manu Ginóbili,41,Argentina,
+
+说明：此时多出了'number'字段，但'number'字段没有数据。
+
+示例13, 使用DictWriter()重写CSV文件,并使用 ``dictwriter_object.writeheader()``  写入表头数据,但 ``fieldnames`` 指定的字段数超过字典列表中的字段总数,并指定 ``restval`` 参数。
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 11
+
+    In [36]: data_dict_list
+    Out[36]:
+    [{'age': '30', 'country': 'USA', 'id': '1001', 'username': 'Stephen Curry'},
+     {'age': '40', 'country': 'USA', 'id': '1002', 'username': 'Kobe Bryant'},
+     {'age': '41',
+      'country': 'Argentina',
+      'id': '1003',
+      'username': 'Manu Ginóbili'}]
+    
+    In [37]: with open('other.csv','wt') as fout:
+        ...:     dictwriter_object = csv.DictWriter(fout, fieldnames=('id','username','age','country','number'), restval='autoinsert')
+        ...:     dictwriter_object.writeheader()
+        ...:     dictwriter_object.writerows(data_dict_list)
+        ...:
+    
+    In [38]: dictwriter_object
+    Out[38]: <csv.DictWriter at 0x7fd479ad9240>
+
+查看other.csv文件的内容::
+
+    [meizhaohui@localhost ~]$ cat other.csv
+    id,username,age,country,number
+    1001,Stephen Curry,30,USA,autoinsert
+    1002,Kobe Bryant,40,USA,autoinsert
+    1003,Manu Ginóbili,41,Argentina,autoinsert
+
+
+说明：此时多出了'number'字段，且'number'字段被填充了'autoinsert'数据。
+
+
+csv格式化相当麻烦，看以下示例。
+
+示例14, 设置CSV输出格式：
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 9
+
+    In [39]: CSV_DATA
+    Out[39]:
+    [['id', 'username', 'age', 'country'],
+     ['1001', 'Stephen Curry', '30', 'USA'],
+     ['1002', 'Kobe Bryant', '40', 'USA'],
+     ['1003', 'Manu Ginóbili', '41', 'Argentina']]
+    
+    In [40]: with open('format.csv', 'wt') as fout:
+        ...:     writer_object = csv.writer(fout, delimiter=' ',quotechar='|',quoting=csv.QUOTE_MINIMAL)
+        ...:     writer_object.writerows(CSV_DATA)
+        ...:
+
+查看format.csv文件内容::
+
+    [meizhaohui@localhost ~]$ cat format.csv
+    id username age country
+    1001 |Stephen Curry| 30 USA
+    1002 |Kobe Bryant| 40 USA
+    1003 |Manu Ginóbili| 41 Argentina
+
+示例15, 设置CSV输出格式：
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+
+    In [41]: with open('format.csv', 'wt') as fout: 
+        ...:     writer_object = csv.writer(fout, delimiter=' ',quotechar='"',quoting=csv.QUOTE_MINIMAL) 
+        ...:     writer_object.writerows(CSV_DATA) 
+        ...:   
+
+查看format.csv文件内容::
+
+    [meizhaohui@localhost ~]$ cat format.csv
+    id username age country
+    1001 "Stephen Curry" 30 USA
+    1002 "Kobe Bryant" 40 USA
+    1003 "Manu Ginóbili" 41 Argentina
+
+为了便于指定输入和输出记录的格式，将特定格式参数组合成 ``dialect`` ,在创建 ``reader`` 和 ``writer`` 对象时，可以指定 ``dialect`` 参数，这些参数名称与下面的 ``Dialect`` 类定义的属性相同。
+
+
+``Dialect`` 类支持以下属性:
+
+- ``Dialect.delimiter`` 用于分隔字段的单字符字符串。默认为','。
+- ``Dialect.lineterminator`` 用于指示 ``writer`` 生成的行的结尾符，默认是'\\r\\n'。
+- ``Dialect.quotechar`` 单字符，用于表示引用包含特殊字符的字段，例如字段中包含有 ``delimiter`` 或 ``quotechar`` 或 换行符，默认是双引号'"'。
+- ``Dialect.quoting`` 控制何时使用引号，可以采用 ``QUOTE_MINIMAL`` 或 ``QUOTE_NONNUMERIC`` 或 ``QUOTE_NONE`` 或 ``QUOTE_ALL``，默认是 ``QUOTE_MINIMAL`` 。
+
+  - ``QUOTE_MINIMAL`` 表示 ``writer`` 对象仅引用包含特殊字符的字段，例如 ``delimiter`` , ``quotechar`` 或 ``lineterminator`` 中的任何字符。
+  - ``QUOTE_NONNUMERIC`` 表示 ``writer`` 对象仅引用引用所有非数字字段。
+  - ``QUOTE_NONE`` 表示 ``writer`` 对象永远不引用字段，当输出数据中包含 ``delimiter`` 分隔符字符时，使用 ``Dialect.escapechar`` 转义，如果未指定 ``Dialect.escapechar`` ，则在遇到需要转义的字符时，则会引起 ``Error`` 异常。 
+  - ``QUOTE_ALL`` 表示 ``writer`` 对象仅引用所有的字段。
+
+- ``Dialect.skipinitialspace`` 如果是 ``True`` ，则分隔符后面的whitespace被忽略，默认是 ``False`` 。
+- ``Dialect.escapechar`` 表示 ``writer`` 对象碰到 ``delimiter`` 时的转义字符，如果 ``Dialect.quoting`` 设置为 ``QUOTE_NONE``,如果 ``doublequote`` 设置为 ``False`` ，则为 ``quotechar``。
+- ``Dialect.doublequote`` 控制如何引用字段中出现的 ``quotechar`` 实例。 如果为 ``True`` ，则字符加倍。 如果为 ``False`` ，则 ``escapechar`` 将用作 ``quotechar``  的前缀。 默认为 ``True`` 。
+
+示例16，使用|作为分隔符，且使用双引号'"'引用所有的字段:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 2
+
+    In [42]: with open('format.csv', 'wt') as fout:
+        ...:     writer_object = csv.writer(fout, delimiter='|',quotechar='"',quoting=csv.QUOTE_ALL)
+        ...:     writer_object.writerows(CSV_DATA)
+        ...:
+
+查看format.csv文件内容::
+
+    [meizhaohui@localhost ~]$ cat format.csv 
+    "id"|"username"|"age"|"country"
+    "1001"|"Stephen Curry"|"30"|"USA"
+    "1002"|"Kobe Bryant"|"40"|"USA"
+    "1003"|"Manu Ginóbili"|"41"|"Argentina"
+
+- 使用 ``writer_object.writerow(data)`` 写入单行数据到CSV文件。
+
+示例17，使用|作为分隔符，且使用双引号'"'引用非数字的字段:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 6
+
+    In [43]: first_line = ('a','b','c', 1, 2)                                                                
+    
+    In [44]: second_line = [',','"','|','line2']                                                             
+    
+    In [45]: with open('format.csv', 'wt') as fout: 
+        ...:     writer_object = csv.writer(fout, delimiter='|',quotechar='"',quoting=csv.QUOTE_NONNUMERIC) 
+        ...:     writer_object.writerow(first_line) 
+        ...:     writer_object.writerow(second_line) 
+        ...:     
+
+查看format.csv文件内容::
+
+    [meizhaohui@localhost ~]$ cat format.csv 
+    "a"|"b"|"c"|1|2
+    ","|""""|"|"|"line2"
+
+说明：第二行中因为有字段中的字符是双引号，与quotechar字符相同，因此根据Dialect.doublequote的定义，需要两个quotechar引用“。
+
+其他的参数选项，可以参考上面介绍的 ``Dialect`` 进行自行测试。
+
+参考：
+
+- `csv — CSV File Reading and Writing <https://docs.python.org/3.6/library/csv.html>`_

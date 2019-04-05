@@ -11,17 +11,16 @@
 # ----------------------------------------------------------
 
 import csv
-CSV_FILE = 'csv_file.csv'
-CSV_DATA = \
-    [
-        ['id', 'username', 'age', 'country'],
-        ['1001', 'Stephen Curry', '30', 'USA'],
-        ['1002', 'Kobe Bryant', '40', 'USA'],
-        ['1003', 'Manu Ginóbili', '41', 'Argentina']
+CSV_FILE = 'file.csv'
+CSV_DATA = [
+    ['id', 'username', 'age', 'country'],
+    ['1001', 'Stephen Curry', '30', 'USA'],
+    ['1002', 'Kobe Bryant', '40', 'USA'],
+    ['1003', 'Manu Ginóbili', '41', 'Argentina']
     ]
 
 
-def read_csv_file(csv_file_path=CSV_FILE):
+def read_csv_file(csv_file_path=None):
     """
     读取csv文件
     :param csv_file_path: csv文件路径
@@ -37,8 +36,6 @@ def read_csv_file(csv_file_path=CSV_FILE):
         for row in rows:
             print(rows.line_num, row)
 
-def write_csv_file(csv_file_path):
-    pass
 
-
-read_csv_file(CSV_FILE)
+if __name__ == '__main__':
+    read_csv_file(CSV_FILE)
