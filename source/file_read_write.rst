@@ -856,6 +856,586 @@ csv格式化相当麻烦，看以下示例。
 
 其他的参数选项，可以参考上面介绍的 ``Dialect`` 进行自行测试。
 
+XML文件的读写
+----------------------
+
+- XML是一种标记(markup)格式，它使用标签(tag)分隔数据。
+- XML通常用于数据传送和消息。
+- XML包含的元素类型，标签<tag>。
+- XML包含的元素类型，属性<tag name="attribute">。
+- XML包含的元素类型，数据<tag>data</tag>。
+- 在Python中解析XML最简单的方法是使用 ``xml.etree.ElementTree`` 模块。
+
+``xml.etree.ElementTree`` 解析XML
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+我们将使用以下XML文档(country_data.xml)作为本节的示例数据:
+
+.. code-block:: xml
+   :linenos:
+
+    <?xml version="1.0"?>
+    <data>
+        <country name="Liechtenstein">
+            <rank>1</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor name="Austria" direction="E"/>
+            <neighbor name="Switzerland" direction="W"/>
+        </country>
+        <country name="Singapore">
+            <rank>4</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc>
+            <neighbor name="Malaysia" direction="N"/>
+        </country>
+        <country name="Panama">
+            <rank>68</rank>
+            <year>2011</year>
+            <gdppc>13600</gdppc>
+            <neighbor name="Costa Rica" direction="W"/>
+            <neighbor name="Colombia" direction="E"/>
+        </country>
+    </data>
+
+- ElementTree将整个XML文档表示为树，Element表示此树中的单个节点。
+- 从XML文件中读取XML数据，用 ``ET.parse('file.xml')`` 解析xml文件，获取xml树，用 ``tree.getroot()`` 获取根节点，根节点是一个 ``Element`` 对象。
+
+从文件中读取XML数据::
+
+    In [1]: import xml.etree.ElementTree as ET                                      
+    
+    In [2]: tree = ET.parse('country_data.xml')                                     
+    
+    In [3]: root = tree.getroot()                                                   
+    
+    In [4]: tree                                                                    
+    Out[4]: <xml.etree.ElementTree.ElementTree at 0x7f932cc24d30>
+    
+    In [5]: root                                                                    
+    Out[5]: <Element 'data' at 0x7f932e653818>
+
+从字符串变量中读取XML数据::
+
+    In [6]: xml_string="""<?xml version="1.0"?>
+       ...: <data>test</data>
+       ...: """
+    
+    In [7]: test_root = ET.fromstring(xml_string)
+    
+    In [8]: test_root
+    Out[8]: <Element 'data' at 0x7f932eb034a8>
+
+- 访问对象的标签 ``tag = element.tag``
+- 访问对象的属性 ``attrib = element.attrib``
+- 访问对象的值 ``value = element.text``
+
+访问根节点标签,属性和值::
+
+    In [9]: root.tag                                                               
+    Out[9]: 'data'
+    
+    In [10]: root.attrib                                                            
+    Out[10]: {}
+    
+    In [11]: root.text                                                              
+    Out[11]: '\n    '
+
+打印根节点的子节点的标签，属性::
+
+    In [12]: for child in root:
+        ...:     print(child.tag, child.attrib)
+        ...:
+    country {'name': 'Liechtenstein'}
+    country {'name': 'Singapore'}
+    country {'name': 'Panama'}
+
+当子节点是嵌套时，我们可以通过索引方式访问子节点::
+
+    In [13]: root[0]
+    Out[13]: <Element 'country' at 0x7f932e653868>
+    
+    In [14]: root[0].tag
+    Out[14]: 'country'
+    
+    In [15]: root[0].attrib
+    Out[15]: {'name': 'Liechtenstein'}
+    
+    In [16]: root[0][1].tag
+    Out[16]: 'year'
+    
+    In [17]: root[0][1].text
+    Out[17]: '2008'
+
+- 查找节点元素,迭代子元素， ``iter(tag=None)`` 显示tag标签及其下所有子标签。
+- 查找节点元素， ``findall(match)`` 查找直接子元素中匹配match的节点。
+- 查找节点元素， ``find(match)`` 查找直接子元素中第一个匹配match的节点。
+
+迭代子元素::
+
+    In [18]: for neighbor in root.iter('neighbor'):
+        ...:     print(neighbor.attrib)
+        ...:
+    {'direction': 'E', 'name': 'Austria'}
+    {'direction': 'W', 'name': 'Switzerland'}
+    {'direction': 'N', 'name': 'Malaysia'}
+    {'direction': 'W', 'name': 'Costa Rica'}
+    {'direction': 'E', 'name': 'Colombia'}
+
+findall或find查找子元素::
+
+    In [19]: for country in root.findall('country'):
+        ...:     rank = country.find('rank').text
+        ...:     name = country.get('name')
+        ...:     print('name:{},rank:{}'.format(name, rank))
+        ...:
+    name:Liechtenstein,rank:1
+    name:Singapore,rank:4
+    name:Panama,rank:68
+
+    In [20]: root.findall('country')     
+    Out[20]: 
+    [<Element 'country' at 0x7f932e653868>,
+     <Element 'country' at 0x7f932cc2bf48>,
+     <Element 'country' at 0x7f932cc2b818>]
+    
+    In [21]: root.findall('rank')
+    Out[21]: []
+    
+    In [22]: root.findall('neighbor')
+    Out[22]: []
+    
+    In [23]: root[0].findall('neighbor')
+    Out[23]:
+    [<Element 'neighbor' at 0x7f932cc2bbd8>,
+     <Element 'neighbor' at 0x7f932cc2b9f8>]
+    
+    In [24]: root[0].find('neighbor')
+    Out[24]: <Element 'neighbor' at 0x7f932cc2bbd8>
+    
+    In [25]: root[0].find('neighbor').get('name')
+    Out[25]: 'Austria'
+    # 说明：使用find匹配只能配置到第一个'neighbor',不能匹配到名称为'Switzerland'的子节点
+
+    In [26]: root[0].findall('neighbor')[0].get('name')
+    Out[26]: 'Austria'
+    
+    In [27]: root[0].findall('neighbor')[1].get('name')
+    Out[27]: 'Switzerland'
+
+- ``ElementTree.write()`` 将更新后的XML数据写入到文件。
+- 可以直接通过操作Element对象来修改节点元素的标签，属性等。
+- ``element.text = new_value`` 给节点赋新值。
+- ``element.set('attribute_name', 'attribute_value')`` 设置节点属性。
+- ``element.append(subelement)`` 给节点增加子节点。
+
+修改节点::
+
+    In [39]: for rank in root.iter('rank'): 
+        ...:     new_rank = int(rank.text) + 1 
+        ...:     rank.text = str(new_rank) 
+        ...:     rank.set('updated', 'yes') 
+        ...:   
+
+    In [40]: tree.write('output.xml')       
+
+新的output.xml文件内容如下:
+
+.. code-block:: xml
+   :linenos:
+   :emphasize-lines: 3,10,16
+
+    <data>
+        <country name="Liechtenstein">
+            <rank updated="yes">2</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor direction="E" name="Austria" />
+            <neighbor direction="W" name="Switzerland" />
+        </country>
+        <country name="Singapore">
+            <rank updated="yes">5</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc>
+            <neighbor direction="N" name="Malaysia" />
+        </country>
+        <country name="Panama">
+            <rank updated="yes">69</rank>
+            <year>2011</year>
+            <gdppc>13600</gdppc>
+            <neighbor direction="W" name="Costa Rica" />
+            <neighbor direction="E" name="Colombia" />
+        </country>
+    </data>
+
+可以发现第3,10,16行的rank节点已经修改成功。但输出文件中并没有 ``<?xml version="1.0"?>`` XML的版本声明。
+
+- ``tree.write('output.xml',encoding='utf-8',xml_declaration=True)`` 声明XML的版本为1.0，并指定用XML传递数据的时候的字符编码为utf-8。
+
+增加XML的版本声明，并设置编码格式::
+
+   In [41]: tree.write('output.xml',encoding='utf-8',xml_declaration=True)
+
+再查看output.xml文件的内容:
+
+.. code-block:: xml
+   :linenos:
+   :emphasize-lines: 1,4,11,17
+
+    <?xml version='1.0' encoding='utf-8'?>
+    <data>
+        <country name="Liechtenstein">
+            <rank updated="yes">2</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor direction="E" name="Austria" />
+            <neighbor direction="W" name="Switzerland" />
+        </country>
+        <country name="Singapore">
+            <rank updated="yes">5</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc>
+            <neighbor direction="N" name="Malaysia" />
+        </country>
+        <country name="Panama">
+            <rank updated="yes">69</rank>
+            <year>2011</year>
+            <gdppc>13600</gdppc>
+            <neighbor direction="W" name="Costa Rica" />
+            <neighbor direction="E" name="Colombia" />
+        </country>
+    </data>
+
+- 使用 ``Element.remove(subelement)`` 移除子节点。
+
+删除rank大于50的所有国家的数据::
+
+    In [42]: for country in root.findall('country'): 
+       ...:     rank = int(country.find('rank').text) 
+       ...:     print('rank:{}'.format(rank)) 
+       ...:     if rank > 50: 
+       ...:         root.remove(country) 
+       ...:                                                                         
+    rank:2
+    rank:5
+    rank:69
+    
+    In [43]: tree.write('output.xml',encoding='utf-8',xml_declaration=True)  
+
+再查看output.xml文件的内容:
+
+.. code-block:: xml
+   :linenos:
+
+    <?xml version='1.0' encoding='utf-8'?>
+    <data>
+        <country name="Liechtenstein">
+            <rank updated="yes">2</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor direction="E" name="Austria" />
+            <neighbor direction="W" name="Switzerland" />
+        </country>
+        <country name="Singapore">
+            <rank updated="yes">5</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc>
+            <neighbor direction="N" name="Malaysia" />
+        </country>
+        </data>
+
+说明：虽然数据正常的写入到文件中，但最后的</data>标签缩进不正常，并没有与前面的<data>标签对齐。
+
+- 使用 ``ET.SubElement((parent, tag, attrib={}, \*\*extra)`` 创建子节点Element对象。
+- 使用 ``ET.dump(element)`` 将一个Element对象打印到标准输出。这个函数只用来调试（一般不把结果打印到标准输出）。
+
+新增country子节点::
+
+    In [44]: new_country = ET.SubElement(root, 'country', attrib={'name': 'Panama'}, other='other
+        ...: _attribute')                                                                        
+    
+    In [45]: new_country                                                                         
+    Out[45]: <Element 'country' at 0x7fecb2e51908>
+    
+    In [46]: ET.dump(root)                                                                       
+    <data>
+        <country name="Liechtenstein">
+            <rank updated="yes">2</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor direction="E" name="Austria" />
+            <neighbor direction="W" name="Switzerland" />
+        </country>
+        <country name="Singapore">
+            <rank updated="yes">5</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc>
+            <neighbor direction="N" name="Malaysia" />
+        </country>
+        <country name="Panama" other="other_attribute" /></data>
+
+- ``element.append(subelement)`` 给节点增加子节点。
+
+给刚才新增的country节点增加rank子节点，并指定rank节点的'updated'属性::
+
+    In [47]: country_rank = ET.Element('rank', attrib={'updated': 'yes'})  
+
+    In [48]: new_country.append(country_rank) 
+
+    In [49]: ET.dump(root)
+
+    <data>
+        <country name="Liechtenstein">
+            <rank updated="yes">2</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor direction="E" name="Austria" />
+            <neighbor direction="W" name="Switzerland" />
+        </country>
+        <country name="Singapore">
+            <rank updated="yes">5</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc>
+            <neighbor direction="N" name="Malaysia" />
+        </country>
+        <country name="Panama" other="other_attribute"><rank updated="yes" /></country></data>
+    
+    In [50]: tree.write('output.xml',encoding='utf-8',xml_declaration=True)
+
+再查看output.xml文件的内容:
+
+.. code-block:: xml
+   :linenos:
+
+    <?xml version='1.0' encoding='utf-8'?>
+    <data>
+        <country name="Liechtenstein">
+            <rank updated="yes">2</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor direction="E" name="Austria" />
+            <neighbor direction="W" name="Switzerland" />
+        </country>
+        <country name="Singapore">
+            <rank updated="yes">5</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc>
+            <neighbor direction="N" name="Malaysia" />
+        </country>
+        <country name="Panama" other="other_attribute"><rank updated="yes" /></country></data>
+
+- 解析带名称空间(namespace)的XML文件。
+
+  - 名称空间是为了解决名称冲突而诞生的，将一个很长的可以保证全局唯一性的字符串与tag标签关联起来，就可以避免命名冲突。可以使用 ``统一资源标识符(Uniform Resource Identifier, URI)`` 来标识名称空间。最普通的URL是 ``统一资源定位符(Uniform Resource Locator, URL)`` ,URL用于标识网络主机的地址。
+  - 用来标识名称空间的网络地址URL并不被XML解析器调用，XML解析器不需要从这个URL中查找信息，该URL的作用仅仅是给名称空间一个唯一的名字，因此这个网络地址可以是虚构的。很多公司经常把这个网络地址指向一个真实的WEB页面，这个地址包含了关于当前名称空间更详细的信息。
+  - 定义一个默认的XML名称空间使得我们在子元素的开始不需要使用前缀，定义格式： ``<element xmlns="default_namespace_URI"`` 。
+  - 非默认的名称空间时，需要指定名称前缀namespace-prefix,带有前缀形式的标签和属性 ``prefix:sometag`` 将扩展为 ``{uri}sometag`` ,前缀由完整的URI替代。定义格式： ``<element xmlns:namespace-prefix="namespace_URL"`` 。
+
+下面的存储有演员及其扮演的角色信息的XML文件(actors.xml)包含两种名称空间，一种是默认的名称空间，另一种是前缀为"fictional"的名称空间:
+    
+.. code-block:: xml
+   :linenos:
+
+    <?xml version="1.0"?>
+    <actors xmlns:fictional="http://characters.example.com"
+            xmlns="http://people.example.com">
+        <actor>
+            <name>John Cleese</name>
+            <fictional:character>Lancelot</fictional:character>
+            <fictional:character>Archie Leach</fictional:character>
+        </actor>
+        <actor>
+            <name>Eric Idle</name>
+            <fictional:character>Sir Robin</fictional:character>
+            <fictional:character>Gunther</fictional:character>
+            <fictional:character>Commander Clement</fictional:character>
+        </actor>
+    </actors>
+
+解析actors.xml文件，并尝试使用findall方法获取actor节点数据::
+
+    In [50]: import xml.etree.ElementTree as ET
+    
+    In [51]: tree = ET.parse('actors.xml')
+    
+    In [52]: actors_root = tree.getroot()
+    
+    In [53]: actors_root
+    Out[53]: <Element '{http://people.example.com}actors' at 0x7fafe2880138>
+    
+    In [54]: actors_root.findall('actor')
+    Out[54]: []
+
+    In [55]: ET.dump(actors_root)                                                          
+    <ns0:actors xmlns:ns0="http://people.example.com" xmlns:ns1="http://characters.example.com">
+        <ns0:actor>
+            <ns0:name>John Cleese</ns0:name>
+            <ns1:character>Lancelot</ns1:character>
+            <ns1:character>Archie Leach</ns1:character>
+        </ns0:actor>
+        <ns0:actor>
+            <ns0:name>Eric Idle</ns0:name>
+            <ns1:character>Sir Robin</ns1:character>
+            <ns1:character>Gunther</ns1:character>
+            <ns1:character>Commander Clement</ns1:character>
+        </ns0:actor>
+    </ns0:actors>
+    
+    In [56]: actors_root.tag
+    Out[56]: '{http://people.example.com}actors'
+
+
+说明：直接使用findall并没有获取到actor节点数据。在各标签前已经自动加上了前缀
+
+第一种方式是在使用findall()或find()时手动加上{URI}到每一个标签或属性的xpath上面::
+
+    In [57]: default_prefix = '{http://people.example.com}'                         
+    
+    In [58]: char_prefix = '{http://characters.example.com}'                        
+    
+    In [59]: for actor in actors_root.findall('{}actor'.format(default_prefix)): 
+        ...:     name = actor.find('{}name'.format(default_prefix)) 
+        ...:     print(name.text) 
+        ...:     for char in actor.findall('{}character'.format(char_prefix)): 
+        ...:         print(' |-->', char.text) 
+        ...:                                                                        
+    John Cleese
+     |--> Lancelot
+     |--> Archie Leach
+    Eric Idle
+     |--> Sir Robin
+     |--> Gunther
+     |--> Commander Clement
+
+另一种方式是为搜索名称空间前缀创建一个字典，并在搜索功能中使用字典::
+
+    In [60]: ns = {'real_person': 'http://people.example.com','role': 'http://characters.example.com'}
+    
+    In [61]: ns
+    Out[61]:
+    {'real_person': 'http://people.example.com',
+     'role': 'http://characters.example.com'}
+    
+    In [62]: for actor in actors_root.findall('real_person:actor', namespaces=ns):
+        ...:     name = actor.find('real_person:name', ns)
+        ...:     print(name.text)
+        ...:     for char in actor.findall('role:character', ns):
+        ...:         print(' |-->', char.text)
+        ...:
+    John Cleese
+     |--> Lancelot
+     |--> Archie Leach
+    Eric Idle
+     |--> Sir Robin
+     |--> Gunther
+     |--> Commander Clement
+
+- XPath支持， ``xml.etree.ElementTree`` 模块对XPath表达式支持比较有限，便于在树中定位元素，完整的XPath引擎超出了模块的范围。
+
+XPath语法如下:
+
++------------------------+--------------------------------------+
+|        语法            |               解释                   |
++========================+======================================+
+|        tag             |  选中符合给定tag标签的全部Element元素|
++------------------------+--------------------------------------+
+|        \*              | 选中全部子Element元素                +
++------------------------+--------------------------------------+
+|        \.              |  选中当前Element元素                 |
++------------------------+--------------------------------------+
+|        //              | 选中同一级别的全部子Element元素      |
++------------------------+--------------------------------------+
+|        \.\.            | 选中父节点Element元素                |
++------------------------+--------------------------------------+
+
+
+XPath的使用示例:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 18,24,37,43,52,65
+
+    In [63]: ET.dump(root)                                                                       
+    <data>
+        <country name="Liechtenstein">
+            <rank updated="yes">2</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor direction="E" name="Austria" />
+            <neighbor direction="W" name="Switzerland" />
+        </country>
+        <country name="Singapore">
+            <rank updated="yes">5</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc>
+            <neighbor direction="N" name="Malaysia" />
+        </country>
+        <country name="Panama" other="other_attribute"><rank updated="yes" /></country></data>
+    
+    In [64]: root.findall(".")   # XPath中使用.点号搜索                                                                
+    Out[64]: [<Element 'data' at 0x7fecb1819188>]
+    
+    In [65]: root.findall(".")[0].tag                                                            
+    Out[65]: 'data'
+
+    In [66]: root.findall("./country/neighbor")  # XPath使用点号和tag方式搜索
+    Out[66]: 
+    [<Element 'neighbor' at 0x7fecb1819278>,
+     <Element 'neighbor' at 0x7fecb1819048>,
+     <Element 'neighbor' at 0x7fecb1819408>]
+    
+    In [67]: for neighbor in root.findall("./country/neighbor"): 
+        ...:     print(neighbor.get('name')) 
+        ...:                                                                                     
+    Austria
+    Switzerland
+    Malaysia
+
+    In [68]: root.findall("./*")  # XPath使用点号和星号搜索所有root的子节点 
+    Out[68]: 
+    [<Element 'country' at 0x7fecb1819368>,
+     <Element 'country' at 0x7fecb18190e8>,
+     <Element 'country' at 0x7fecb2e51908>]
+
+    In [69]: root.findall("*/year")  # XPath使用星号搜索所有year节点                      
+    Out[69]: [<Element 'year' at 0x7fecb1819458>, <Element 'year' at 0x7fecb18193b8>]
+    
+    In [70]: for year in root.findall("*/year"): 
+        ...:     print(year.text) 
+        ...:                                                                                     
+    2008
+    2011
+
+    In [71]: root.findall(".//rank") # 使用XPath点号和//语法，选中所有rank节点 
+    Out[71]: 
+    [<Element 'rank' at 0x7fecb1819138>,
+     <Element 'rank' at 0x7fecb1819228>,
+     <Element 'rank' at 0x7fecb185e6d8>]
+    
+    In [72]: for rank in root.findall(".//rank"): 
+        ...:     print(rank.text) 
+        ...:                                                                                     
+    2
+    5
+    None
+
+    In [73]: root.findall("./country/rank/..")  # 使用XPath点号，tag标签以及双点号查找父节点
+    Out[73]:
+    [<Element 'country' at 0x7fecb1819368>,
+     <Element 'country' at 0x7fecb18190e8>,
+     <Element 'country' at 0x7fecb2e51908>]
+
+
+``xml.sax`` 解析XML
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``xml.dom`` 解析XML
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 参考：
 
 - `csv — CSV File Reading and Writing <https://docs.python.org/3.6/library/csv.html>`_
+- `xml.etree.ElementTree — The ElementTree XML API <https://docs.python.org/3/library/xml.etree.elementtree.html>`_
+- `xml.sax — Support for SAX2 parsers <https://docs.python.org/3/library/xml.sax.html>`_
+- `xml.dom — The Document Object Model API <https://docs.python.org/3/library/xml.dom.html>`_
+- `Python XML操作 <https://www.cnblogs.com/AlwinXu/p/5483177.html>`_
