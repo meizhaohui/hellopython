@@ -1456,7 +1456,16 @@ XPath的使用示例:
 
 ``xml.dom`` 解析XML可参考 `xml.dom — The Document Object Model API <https://docs.python.org/3/library/xml.dom.html>`_
 
+- XML安全问题:  ``defusedxml`` 修复了Python的XML库中的拒绝服务和其他漏洞，只需要用 ``defusedxml`` 替换原来用的 ``xml.etree``。
 
+不安全::
+
+    import xml.etree.ElementTree as ET
+    
+受保护::
+
+    import defusedxml.ElementTree as ET
+    
 美化xml输出
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
