@@ -872,7 +872,7 @@ XML文件的读写
 我们将使用以下XML文档(country_data.xml)作为本节的示例数据:
 
 .. code-block:: xml
-   :linenos:
+    :linenos:
 
     <?xml version="1.0"?>
     <data>
@@ -1042,8 +1042,8 @@ findall或find查找子元素::
 新的output.xml文件内容如下:
 
 .. code-block:: xml
-   :linenos:
-   :emphasize-lines: 3,10,16
+    :linenos:
+    :emphasize-lines: 3,10,16
 
     <data>
         <country name="Liechtenstein">
@@ -1079,8 +1079,8 @@ findall或find查找子元素::
 再查看output.xml文件的内容:
 
 .. code-block:: xml
-   :linenos:
-   :emphasize-lines: 1,4,11,17
+    :linenos:
+    :emphasize-lines: 1,4,11,17
 
     <?xml version='1.0' encoding='utf-8'?>
     <data>
@@ -1125,7 +1125,7 @@ findall或find查找子元素::
 再查看output.xml文件的内容:
 
 .. code-block:: xml
-   :linenos:
+    :linenos:
 
     <?xml version='1.0' encoding='utf-8'?>
     <data>
@@ -1205,7 +1205,7 @@ findall或find查找子元素::
 再查看output.xml文件的内容:
 
 .. code-block:: xml
-   :linenos:
+    :linenos:
 
     <?xml version='1.0' encoding='utf-8'?>
     <data>
@@ -1234,7 +1234,7 @@ findall或find查找子元素::
 下面的存储有演员及其扮演的角色信息的XML文件(actors.xml)包含两种名称空间，一种是默认的名称空间，另一种是前缀为"fictional"的名称空间:
     
 .. code-block:: xml
-   :linenos:
+    :linenos:
 
     <?xml version="1.0"?>
     <actors xmlns:fictional="http://characters.example.com"
@@ -1334,28 +1334,29 @@ findall或find查找子元素::
 
 XPath语法如下:
 
-+------------------------+--------------------------------------+
-|        语法            |               解释                   |
-+========================+======================================+
-|        tag             |  选中符合给定tag标签的全部Element元素|
-+------------------------+--------------------------------------+
-|        \*              | 星号，选中全部子Element元素          +
-+------------------------+--------------------------------------+
-|        \.              |  点号，选中当前Element元素           |
-+------------------------+--------------------------------------+
-|        //              | 选中同一级别的全部子Element元素      |
-+------------------------+--------------------------------------+
-|        \.\.            | 双点号，选中父节点Element元素        |
-+------------------------+--------------------------------------+
-|        [@attrib]       | 选中所有具有attrib属性节点Element元素|
-+------------------------+--------------------------------------+
-
++------------------------+------------------------------------------------------------------------+
+|        语法            |                               解释                                     |
++========================+========================================================================+
+|        tag             |  选中符合给定tag标签的全部Element元素                                  |
++------------------------+------------------------------------------------------------------------+
+|        \*              | 星号，选中全部子Element元素                                            +
++------------------------+------------------------------------------------------------------------+
+|        \.              |  点号，选中当前Element元素                                             |
++------------------------+------------------------------------------------------------------------+
+|        //              | 选中同一级别的全部子Element元素                                        |
++------------------------+------------------------------------------------------------------------+
+|        \.\.            | 双点号，选中父节点Element元素                                          |
++------------------------+------------------------------------------------------------------------+
+|        [@attrib]       | 选中所有具有attrib属性的节点Element元素                                |
++------------------------+------------------------------------------------------------------------+
+|   [@attrib='value']    | 选中所有具有attrib属性具值为value的节点Element元素                     |
++------------------------+------------------------------------------------------------------------+
 
 XPath的使用示例:
 
 .. code-block:: python
    :linenos:
-   :emphasize-lines: 18,24,37,43,52,65
+   :emphasize-lines: 18,24,37,43,52,65,71,77,80,86,89
 
     In [63]: ET.dump(root)                                                                       
     <data>
@@ -1426,13 +1427,141 @@ XPath的使用示例:
     [<Element 'country' at 0x7fecb1819368>,
      <Element 'country' at 0x7fecb18190e8>,
      <Element 'country' at 0x7fecb2e51908>]
+    
+    In [74]: root.findall(".//country[@name]")  # 使用XPath点号，查找具有name属性的country节点
+    Out[74]:
+    [<Element 'country' at 0x0000026C6A325CC8>,
+     <Element 'country' at 0x0000026C6A325B88>,
+     <Element 'country' at 0x0000026C6A3254F8>]
+
+    In [75]: root.findall(".//country[@other]")   # 使用XPath点号，查找具有other属性的country节点
+    Out[75]: [<Element 'country' at 0x0000026C6A3254F8>]
+
+    In [76]: root.findall(".//country/rank[@updated]")  # 使用XPath点号，查找具有updated属性的country/rank节点
+    Out[76]:
+    [<Element 'rank' at 0x0000026C6A325B38>,
+     <Element 'rank' at 0x0000026C6A3254A8>,
+     <Element 'rank' at 0x0000026C6A3251D8>]
+     
+    In [77]: root.findall(".//country[@name='Singapore']")  # 使用XPath点号，查找具有name属性且值为'Singapore'的country节点
+    Out[77]: [<Element 'country' at 0x0000026C6A325B88>]
+
+    In [78]: root.findall(".//country[@other='other_attribute']")   # 使用XPath点号，查找具有other属性且值为'other_attribute'的country节点
+    Out[78]: [<Element 'country' at 0x0000026C6A3254F8>]
 
 
-``xml.sax`` 解析XML
+更多 ``xml.etree.ElementTree`` 的介绍，请参考 `xml.etree.ElementTree — The ElementTree XML API <https://docs.python.org/3/library/xml.etree.elementtree.html>`_
+
+``xml.sax`` 解析XML可参考 `xml.sax — Support for SAX2 parsers <https://docs.python.org/3/library/xml.sax.html>`_
+
+``xml.dom`` 解析XML可参考 `xml.dom — The Document Object Model API <https://docs.python.org/3/library/xml.dom.html>`_
+
+
+美化xml输出
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``xml.dom`` 解析XML
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pretty_xml.py文件内容如下::
+
+    #!/usr/bin/python3
+    """
+    @Time    : 2019/4/8 20:29
+    @Author  : Mei Zhaohui
+    @Email   : mzh.whut@gmail.com
+    @File    : pretty_xml.py
+    @Software: PyCharm
+    """
+    import xml.etree.ElementTree as ET
+
+
+    def prettyxml(element, indent='    ', newline='\n', level=0):
+        """
+        美化XML Element对象
+        :param element: Element对象，写入文件时，推荐使用root
+        :param indent: 缩进空格，默认4个空格
+        :param newline: 换行符
+        :param level: 缩进层次
+        :return:
+        """
+        # elemnt为传进来的Elment类，参数indent用于缩进，newline用于换行
+        if element:  # 判断element是否有子元素
+            if not element.text or element.text.isspace():  # 如果element的text没有内容
+                element.text = newline + indent * (level + 1)
+            else:
+                element.text = newline + indent * (level + 1) \
+                               + element.text.strip() + newline + indent * (level + 1)
+
+        temp = list(element)  # 将elemnt转成list
+        for subelement in temp:
+            # 如果不是list的最后一个元素，说明下一个行是同级别元素的起始，缩进应一致
+            if temp.index(subelement) < (len(temp) - 1):
+                subelement.tail = newline + indent * (level + 1)
+            else:
+                subelement.tail = newline + indent * level
+            prettyxml(subelement, indent, newline, level=level + 1)  # 对子元素进行递归操作
+
+
+    def main():
+        """main function"""
+        tree = ET.parse('data.xml')
+        root = tree.getroot()
+        prettyxml(root)
+        tree.write('output.xml',
+                   encoding='utf-8',
+                   xml_declaration=True,
+                   method='xml',
+                   short_empty_elements=False)
+
+
+    if __name__ == '__main__':
+        main()
+
+data.xml文件内容如下:
+
+.. code-block:: xml
+    :linenos:
+   
+    <?xml version="1.0"?>
+    <data>
+        <country name="Liechtenstein">
+            <rank updated="yes">2</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor direction="E" name="Austria" />
+            <neighbor direction="W" name="Switzerland" />
+        </country>
+        <country name="Singapore">
+            <rank updated="yes">5</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc><neighbor direction="N" name="Malaysia" />
+        </country>
+        <country name="Panama" other="other_attribute"><rank updated="yes" /></country></data>
+    
+运行pretty_xml.py生成的output.xml文件内容如下:
+
+.. code-block:: xml
+    :linenos:
+   
+    <?xml version='1.0' encoding='utf-8'?>
+    <data>
+        <country name="Liechtenstein">
+            <rank updated="yes">2</rank>
+            <year>2008</year>
+            <gdppc>141100</gdppc>
+            <neighbor direction="E" name="Austria"></neighbor>
+            <neighbor direction="W" name="Switzerland"></neighbor>
+        </country>
+        <country name="Singapore">
+            <rank updated="yes">5</rank>
+            <year>2011</year>
+            <gdppc>59900</gdppc>
+            <neighbor direction="N" name="Malaysia"></neighbor>
+        </country>
+        <country name="Panama" other="other_attribute">
+            <rank updated="yes"></rank>
+        </country>
+    </data>
+
+
 
 参考：
 
