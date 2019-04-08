@@ -12,7 +12,7 @@ github设置免密上传文件
 
 -  生成密钥::
 
-    ssh-keygen -t rsa -C "mzh.whut@gmail.com”
+    ssh-keygen -t rsa -C "mzh.whut@gmail.com"
 
    运行以上命令生成密钥，运行过程中一路按回车键(Enter)。命令执行完成后，会在家目录中生成.ssh目录，并生成两个文件：id_rsa(密钥)和id_rsa.pub(公钥)，使用NotePad++打开公钥id_rsa.pub，将其中的内容复制。
 
@@ -33,7 +33,7 @@ github设置免密上传文件
 
 -  设置邮箱::
     
-    git config --global user.email "mzh.whut@gmail.com”
+    git config --global user.email "mzh.whut@gmail.com"
 
 -  查看用户名设置是否生效::
     
@@ -96,7 +96,7 @@ github设置免密上传文件
 
 -  添加commit信息::
     
-    git commit -m"commit log”  (注：此处不要使用单引号包裹commit log信息)
+    git commit -m"commit log"  (注：此处不要使用单引号包裹commit log信息)
 
 -  查看远程仓信息::
 
