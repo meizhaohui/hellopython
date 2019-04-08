@@ -304,7 +304,7 @@ with上下文管理器的使用
             print(line)
             
 
-对于一些特殊类型的文件，可以使用相应的模块进行读取。如 ``json`` 模块可以读取json文件， ``logging`` 模块读取日志文件， ``xml.etree.ElementTree`` 读取xml文件， ``csv`` 模块读取CSV文件， ``ConfigParser`` 模块读取配置文件等。
+对于一些特殊类型的文件，可以使用相应的模块进行读取。如 ``json`` 模块可以读取json文件， ``logging`` 模块读取日志文件， ``xml.etree.ElementTree`` 读取xml文件， ``csv`` 模块读取CSV文件， ``ConfigParser`` 模块读取配置文件，如果你需要两层以上的嵌套结构，建议使用json文件保存配置文件。
 
 csv模块
 ------------------------
