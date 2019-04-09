@@ -339,7 +339,196 @@ sqlite3处理SQLite数据库
 pymysql处理mysql数据库
 --------------------------------------------
 
+- 安装pymysql:  ``pip install PyMySQL==0.7.5``
 
+- 安装MariaDB，MariaDB下载链接： https://downloads.mariadb.org/， 安装请参考 `MariaDB安装与使用 <https://www.cnblogs.com/oukele/p/9590965.html>`_
+
+- 准备数据库数据表
+
+创建数据库data和数据表users::
+
+    $ mysql -uroot -proot
+    Welcome to the MariaDB monitor.  Commands end with ; or \g.
+    Your MariaDB connection id is 9
+    Server version: 10.3.14-MariaDB mariadb.org binary distribution
+
+    Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+    Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+    MariaDB [(none)]> show databases;
+    +--------------------+
+    | Database           |
+    +--------------------+
+    | information_schema |
+    | mysql              |
+    | performance_schema |
+    | test               |
+    +--------------------+
+    4 rows in set (0.001 sec)
+
+    MariaDB [(none)]> create database data;
+    Query OK, 1 row affected (0.001 sec)
+
+    MariaDB [(none)]> show databases;         
+    +--------------------+                    
+    | Database           |                    
+    +--------------------+                    
+    | data               |                    
+    | information_schema |                    
+    | mysql              |                    
+    | performance_schema |                    
+    | test               |                    
+    +--------------------+                    
+    5 rows in set (0.001 sec)                 
+                                              
+    MariaDB [(none)]> use data;               
+    Database changed
+
+    MariaDB [data]> show tables;
+    Empty set (0.001 sec)    
+
+    MariaDB [data]> CREATE TABLE `users` (
+        -> `id` int(11) NOT NULL AUTO_INCREMENT,
+        -> `email` varchar(255) COLLATE utf8_bin NOT NULL,
+        -> `password` varchar(255) COLLATE utf8_bin NOT NULL,
+        -> PRIMARY KEY (`id`)
+        -> ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin
+        -> AUTO_INCREMENT=1 ;
+    Query OK, 0 rows affected (0.059 sec)
+
+    MariaDB [data]> show tables;
+    +----------------+
+    | Tables_in_data |
+    +----------------+
+    | users          |
+    +----------------+
+    1 row in set (0.000 sec)
+
+    MariaDB [data]> select * from users;
+    Empty set (0.000 sec)    
+
+- ``pymysql.connect`` 连接数据库
+
+语法::
+
+    pymysql.connections.Connection(host=None, user=None, password='', database=None, port=0, unix_socket=None, charset='', sql_mode=None, read_default_file=None, conv=None, use_unicode=None, client_flag=0, cursorclass=<class 'pymysql.cursors.Cursor'>, init_command=None, connect_timeout=10, ssl=None, read_default_group=None, compress=None, named_pipe=None, autocommit=False, db=None, passwd=None, local_infile=False, max_allowed_packet=16777216, defer_connect=False, auth_plugin_map=None, read_timeout=None, write_timeout=None, bind_address=None, binary_prefix=False, program_name=None, server_public_key=None)
+    
+    Parameters:	
+
+        host – Host where the database server is located  数据库服务主机
+        user – Username to log in as  登陆用户名
+        password – Password to use.  登陆密码
+        database – Database to use, None to not use a particular one.  数据库名称
+        port – MySQL port to use, default is usually OK. (default: 3306)  端口号
+        bind_address – When the client has multiple network interfaces, specify the interface from which to connect to the host. Argument can be a hostname or an IP address.
+        unix_socket – Optionally, you can use a unix socket rather than TCP/IP.
+        read_timeout – The timeout for reading from the connection in seconds (default: None - no timeout)
+        write_timeout – The timeout for writing to the connection in seconds (default: None - no timeout)
+        charset – Charset you want to use.  编码格式
+        sql_mode – Default SQL_MODE to use.
+        read_default_file – Specifies my.cnf file to read these parameters from under the [client] section.
+        conv – Conversion dictionary to use instead of the default one. This is used to provide custom marshalling and unmarshalling of types. See converters.
+        use_unicode – Whether or not to default to unicode strings. This option defaults to true for Py3k.
+        client_flag – Custom flags to send to MySQL. Find potential values in constants.CLIENT.
+        cursorclass – Custom cursor class to use.
+        init_command – Initial SQL statement to run when connection is established.
+        connect_timeout – Timeout before throwing an exception when connecting. (default: 10, min: 1, max: 31536000)
+        ssl – A dict of arguments similar to mysql_ssl_set()’s parameters.
+        read_default_group – Group to read from in the configuration file.
+        compress – Not supported
+        named_pipe – Not supported
+        autocommit – Autocommit mode. None means use server default. (default: False)  自动提交事务
+        local_infile – Boolean to enable the use of LOAD DATA LOCAL command. (default: False)
+        max_allowed_packet – Max size of packet sent to server in bytes. (default: 16MB) Only used to limit size of “LOAD LOCAL INFILE” data packet smaller than default (16KB).
+        defer_connect – Don’t explicitly connect on construction - wait for connect call. (default: False)
+        auth_plugin_map – A dict of plugin names to a class that processes that plugin. The class will take the Connection object as the argument to the constructor. The class needs an authenticate method taking an authentication packet as an argument. For the dialog plugin, a prompt(echo, prompt) method can be used (if no authenticate method) for returning a string from the user. (experimental)
+        server_public_key – SHA256 authentication plugin public key value. (default: None)
+        db – Alias for database. (for compatibility to MySQLdb)  数据库名称
+        passwd – Alias for password. (for compatibility to MySQLdb)  登陆密码
+        binary_prefix – Add _binary prefix on bytes and bytearray. (default: False)
+
+
+连接MariaDB服务，使用data数据库::
+
+    In [1]: import pymysql
+
+    In [2]: connection = pymysql.connect(host='localhost',  
+       ...: user='root',
+       ...: password='root',
+       ...: db='data',
+       ...: charset='utf8',
+       ...: cursorclass=pymysql.cursors.DictCursor)
+
+    In [3]: connection
+    Out[3]: <pymysql.connections.Connection at 0x15759136518>
+
+- ``connection.cursor(cursor=None)`` 创建游标对象
+- ``connection.commit()`` 提交事务
+- ``connection.close()`` 关闭连接
+
+创建游标，并执行SQL语句::
+
+    In [4]: try:
+       ...:     with connection.cursor() as cursor:  # 创建游标
+       ...:         sql = "INSERT INTO `users` (`email`, `password`) VALUES (%s, %s)"  # 构建SQL插入语句
+       ...:         cursor.execute(sql, ('webmaster@python.org', 'very-secret'))  # 执行SQL语句
+       ...:
+       ...:     connection.commit()  # 提交事务
+       ...: finally:
+       ...:     connection.close()  # 关闭连接
+       ...:
+       
+在MariaDB中查询数据::
+
+    MariaDB [data]> select * from users;
+    +----+----------------------+-------------+
+    | id | email                | password    |
+    +----+----------------------+-------------+
+    |  1 | webmaster@python.org | very-secret |
+    +----+----------------------+-------------+
+    1 row in set (0.000 sec)
+
+    MariaDB [data]>
+
+- ``pymysql.cursors.Cursor.fetchone()``  查询一行数据
+
+查询刚才插入的数据::
+
+    In [5]: with connection.cursor() as cursor:
+        ...:     sql = "SELECT id, password FROM  users WHERE email= %s "
+        ...:     cursor.execute(sql, ('webmaster@python.org'))
+        ...:     print(cursor.fetchone())
+        ...:
+    {'id': 1, 'password': 'very-secret'}
+    
+- ``connection.select_db(db)`` 修改当前正在处理的数据库
+
+修改数据表为mysql，并查询数据库中的表::
+
+    In [6]: connection                                                                                                     
+    Out[6]: <pymysql.connections.Connection at 0x157594142e8>                                                              
+                                                                                                                            
+    In [7]: connection.select_db('mysql')                                                                                  
+                                                                                                                            
+    In [8]: cursor = connection.cursor()                                                                                   
+                                                                                                                            
+    In [9]: cursor.execute('show tables')                                                                                  
+    Out[9]: 31                                                                                                             
+                                                                                                                            
+    In [10]: print(cursor.fetchall())                                                                                       
+    [{'Tables_in_mysql': 'column_stats'}, {'Tables_in_mysql': 'columns_priv'}, {'Tables_in_mysql': 'db'}, {'Tables_in_mysql'
+    : 'event'}, {'Tables_in_mysql': 'func'}, {'Tables_in_mysql': 'general_log'}, {'Tables_in_mysql': 'gtid_slave_pos'}, {'Ta
+    bles_in_mysql': 'help_category'}, {'Tables_in_mysql': 'help_keyword'}, {'Tables_in_mysql': 'help_relation'}, {'Tables_in
+    _mysql': 'help_topic'}, {'Tables_in_mysql': 'host'}, {'Tables_in_mysql': 'index_stats'}, {'Tables_in_mysql': 'innodb_ind
+    ex_stats'}, {'Tables_in_mysql': 'innodb_table_stats'}, {'Tables_in_mysql': 'plugin'}, {'Tables_in_mysql': 'proc'}, {'Tab
+    les_in_mysql': 'procs_priv'}, {'Tables_in_mysql': 'proxies_priv'}, {'Tables_in_mysql': 'roles_mapping'}, {'Tables_in_mys
+    ql': 'servers'}, {'Tables_in_mysql': 'slow_log'}, {'Tables_in_mysql': 'table_stats'}, {'Tables_in_mysql': 'tables_priv'}
+    , {'Tables_in_mysql': 'time_zone'}, {'Tables_in_mysql': 'time_zone_leap_second'}, {'Tables_in_mysql': 'time_zone_name'},
+     {'Tables_in_mysql': 'time_zone_transition'}, {'Tables_in_mysql': 'time_zone_transition_type'}, {'Tables_in_mysql': 'tra
+    nsaction_registry'}, {'Tables_in_mysql': 'user'}]                                                                       
+                                                                                                                            
+       
 SQLAlchemy ORM对象关系映射处理数据库
 --------------------------------------------
 
