@@ -549,3 +549,4 @@ redis模块处理NoSQL非关系型数据库Redis
 参考文献:
 
 - `sqlite3 — DB-API 2.0 interface for SQLite databases <https://docs.python.org/3/library/sqlite3.html>`_
+- `Welcome to PyMySQL’s documentation! <https://pymysql.readthedocs.io/en/latest/index.html>`_
