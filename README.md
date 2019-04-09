@@ -23,6 +23,7 @@ Docs build status:  [![Documentation Status](https://readthedocs.org/projects/he
 - [Regular Expression module](./source/re_module.rst) 
 - [Object Oriented Programming](./source/object_oriented_programming.rst)
 - [JSON module](./source/json_module.rst) 
+- [Database](./source/database.rst) 
 - [Use Selenium](./source/selenium_install_and_use.rst)
 - [Use Universally Unique Identifier](./source/univeral_unique_identifier.rst)
 - [Upload file to Github without username and password](./source/upload_file_to_github_without_username_and_password.rst)

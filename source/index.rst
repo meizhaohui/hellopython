@@ -31,6 +31,7 @@ Welcome to hellopython's documentation!
     re_module
     object_oriented_programming
     json_module
+    database
     selenium_install_and_use
     univeral_unique_identifier
     upload_file_to_github_without_username_and_password
