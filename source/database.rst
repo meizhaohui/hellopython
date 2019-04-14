@@ -503,6 +503,7 @@ pymysql处理mysql数据库
     {'id': 1, 'password': 'very-secret'}
     
 - ``connection.select_db(db)`` 修改当前正在处理的数据库
+- ``pymysql.cursors.Cursor.fetchall()``  查询剩余行的所有数据
 
 修改数据表为mysql，并查询数据库中的表::
 
@@ -516,23 +517,171 @@ pymysql处理mysql数据库
     In [9]: cursor.execute('show tables')                                                                                  
     Out[9]: 31                                                                                                             
                                                                                                                             
-    In [10]: print(cursor.fetchall())                                                                                       
-    [{'Tables_in_mysql': 'column_stats'}, {'Tables_in_mysql': 'columns_priv'}, {'Tables_in_mysql': 'db'}, {'Tables_in_mysql'
-    : 'event'}, {'Tables_in_mysql': 'func'}, {'Tables_in_mysql': 'general_log'}, {'Tables_in_mysql': 'gtid_slave_pos'}, {'Ta
-    bles_in_mysql': 'help_category'}, {'Tables_in_mysql': 'help_keyword'}, {'Tables_in_mysql': 'help_relation'}, {'Tables_in
-    _mysql': 'help_topic'}, {'Tables_in_mysql': 'host'}, {'Tables_in_mysql': 'index_stats'}, {'Tables_in_mysql': 'innodb_ind
-    ex_stats'}, {'Tables_in_mysql': 'innodb_table_stats'}, {'Tables_in_mysql': 'plugin'}, {'Tables_in_mysql': 'proc'}, {'Tab
-    les_in_mysql': 'procs_priv'}, {'Tables_in_mysql': 'proxies_priv'}, {'Tables_in_mysql': 'roles_mapping'}, {'Tables_in_mys
-    ql': 'servers'}, {'Tables_in_mysql': 'slow_log'}, {'Tables_in_mysql': 'table_stats'}, {'Tables_in_mysql': 'tables_priv'}
-    , {'Tables_in_mysql': 'time_zone'}, {'Tables_in_mysql': 'time_zone_leap_second'}, {'Tables_in_mysql': 'time_zone_name'},
-     {'Tables_in_mysql': 'time_zone_transition'}, {'Tables_in_mysql': 'time_zone_transition_type'}, {'Tables_in_mysql': 'tra
-    nsaction_registry'}, {'Tables_in_mysql': 'user'}]                                                                       
-                                                                                                                            
+    In [10]: cursor.fetchone()
+    Out[10]: ('column_stats',)
+
+    In [11]: cursor.fetchall()
+    Out[11]:
+    (('columns_priv',),
+     ('db',),
+     ('event',),
+     ('func',),
+     ('general_log',),
+     ('gtid_slave_pos',),
+     ('help_category',),
+     ('help_keyword',),
+     ('help_relation',),
+     ('help_topic',),
+     ('host',),
+     ('index_stats',),
+     ('innodb_index_stats',),
+     ('innodb_table_stats',),
+     ('plugin',),
+     ('proc',),
+     ('procs_priv',),
+     ('proxies_priv',),
+     ('roles_mapping',),
+     ('servers',),
+     ('slow_log',),
+     ('table_stats',),
+     ('tables_priv',),
+     ('time_zone',),
+     ('time_zone_leap_second',),
+     ('time_zone_name',),
+     ('time_zone_transition',),
+     ('time_zone_transition_type',),
+     ('transaction_registry',),
+     ('user',))
+
+在MariaDB中查询数据::
+
+    MariaDB [data]> use mysql;                 
+    Database changed                          
+    MariaDB [mysql]> show tables;             
+    +---------------------------+             
+    | Tables_in_mysql           |             
+    +---------------------------+             
+    | column_stats              |             
+    | columns_priv              |             
+    | db                        |             
+    | event                     |             
+    | func                      |             
+    | general_log               |             
+    | gtid_slave_pos            |             
+    | help_category             |             
+    | help_keyword              |             
+    | help_relation             |             
+    | help_topic                |             
+    | host                      |             
+    | index_stats               |             
+    | innodb_index_stats        |             
+    | innodb_table_stats        |             
+    | plugin                    |             
+    | proc                      |             
+    | procs_priv                |             
+    | proxies_priv              |             
+    | roles_mapping             |             
+    | servers                   |             
+    | slow_log                  |             
+    | table_stats               |             
+    | tables_priv               |             
+    | time_zone                 |             
+    | time_zone_leap_second     |             
+    | time_zone_name            |             
+    | time_zone_transition      |             
+    | time_zone_transition_type |             
+    | transaction_registry      |             
+    | user                      |             
+    +---------------------------+             
+    31 rows in set (0.001 sec)                
+                                              
+    MariaDB [mysql]>                          
        
 SQLAlchemy ORM对象关系映射处理数据库
 --------------------------------------------
 
+- ``Object Relational Mapper``   对象关系映射，ORM将数据库中的表与面向对象语言中的类建立了一种对应关系。这样，我们要操作数据库，数据库中的表或者表中的一条记录就可以直接通过操作类或者类实例来完成。
 
+- 查看SQLAlchemy的版本
+
+通过  ``sqlalchemy.__version__``  查看SQLAlchemy的版本::
+
+
+    In [1]: import sqlalchemy
+
+    In [2]: sqlalchemy.__version__
+    Out[2]: '1.3.2'
+
+- 使用 ``create_engine()`` 连接数据库。
+- ``echo=True`` 参数表明开启SQLAlchemy日志记录，启用后会生成所有SQL语句。
+- ``create_engine()`` 的返回值是Engine的一个实例，它表示数据库的核心接口，使用不同的数据库处理模块处理的dialect最后生成的Engine实例不同。
+- 当第一次使用 ``create_engine()`` 连接时，引擎实际上还没有尝试连接到数据库(Lazy Connecting懒惰连接)。只有在第一次要求它对数据库执行任务时才会连接数据库。
+- 第一次调用 ``Engine.execute()`` 或 ``Engine.connect()`` 这样的方法时，Engine会建立与数据库的真实DBAPI连接，然后用于发出SQL。
+- 通常不会直接使用 ``Engine`` ，而是通过使用ORM来间接使用 ``Engine`` 。
+
+使用 ``create_engine()`` 连接数据库。以下是连接内存数据库SQLite::
+
+    In [3]: from sqlalchemy import create_engine
+
+    In [4]: engine = create_engine('sqlite:///:memory:', echo=True)
+
+    In [5]: engine
+    Out[5]: Engine(sqlite:///:memory:)
+
+引擎Engine的方法和属性::
+
+    engine.
+             begin()                  dialect                  drop                     execution_options       logging_name             run_callable             transaction
+             connect                  dispatch                 echo                     get_execution_options   name                     scalar                   update_execution_options
+             contextual_connect       dispose                  engine                   has_table               pool                     schema_for_object        url
+             create                   driver                   execute                  logger                  raw_connection           table_names
+
+查看engine的一些属性::
+
+    In [6]: engine.url                                                        
+    Out[6]: sqlite:///:memory:                                                
+                                                                           
+    In [7]: engine.driver                                                     
+    Out[7]: 'pysqlite'                                                        
+                                                                           
+    In [8]: engine.engine                                                     
+    Out[8]: Engine(sqlite:///:memory:)                                        
+                                                                           
+    In [9]: engine.logger                                                     
+    Out[9]: <sqlalchemy.log.InstanceLogger at 0x225a2ac98d0>                  
+                                                                           
+    In [10]: engine.name                                                      
+    Out[10]: 'sqlite'                                                         
+                                                                           
+    In [11]: engine.logging_name                                              
+                                                                           
+    In [12]: engine.echo                                                      
+    Out[12]: True                                                             
+
+    In [13]: engine.pool
+    Out[13]: <sqlalchemy.pool.impl.SingletonThreadPool at 0x225a2ac3eb8>
+
+    In [14]: engine.dialect
+    Out[14]: <sqlalchemy.dialects.sqlite.pysqlite.SQLiteDialect_pysqlite at 0x225a27b1f60>
+    
+- Engine是任何SQLAlchemy应用程序的起点。 它是实际数据库及其DBAPI的基础，通过 ``Pool`` 连接池和 ``Dialect`` 方言传递给SQLAlchemy应用程序，该 ``Dialect`` 方言描述了如何与特定类型的数据库/DBAPI组合进行通信。
+
+SQLAlchemy Engine的架构如下:
+
+.. image:: ./_static/images/sqla_engine_arch.png
+
+- SQLAlchemy ``create_engine()`` 函数基于数据库URL(Database Url)来生成 ``Engine`` 对象，URL通常包含 ``username用户名`` ,  ``password密码`` , ``hostname主机名`` , ``database name数据库名称`` 以及用于其他配置的可选关键字参数。
+
+数据库URL的典型形式是::
+
+    dialect+driver://username:password@host:port/database
+
+- dialect方言是SQLAlchemy方言的标识名称，如sqlite, mysql, postgresql, oracle,或mssql。
+- driver是使用全小写字母连接到数据库的DBAPI的名称。
+- URL中特殊的字符需要使用URL编码。
+    
+    
+    
 懒人包dataset处理数据库
 --------------------------------------------
 
@@ -550,3 +699,7 @@ redis模块处理NoSQL非关系型数据库Redis
 
 - `sqlite3 — DB-API 2.0 interface for SQLite databases <https://docs.python.org/3/library/sqlite3.html>`_
 - `Welcome to PyMySQL’s documentation! <https://pymysql.readthedocs.io/en/latest/index.html>`_
+- `SQLAlchemy 1.3 Documentation: Object Relational Tutorial <https://docs.sqlalchemy.org/en/13/orm/tutorial.html>`_
+- `SQLAlchemy 1.3 Documentation: Working with Engines and Connections <https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Engine.execute>`_
+- `SQLAlchemy 1.3 Documentation: Engine Configuration <https://docs.sqlalchemy.org/en/13/core/engines.html#sqlalchemy.create_engine>`_
+
