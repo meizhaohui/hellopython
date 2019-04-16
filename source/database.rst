@@ -680,7 +680,248 @@ SQLAlchemy Engine的架构如下:
 - driver是使用全小写字母连接到数据库的DBAPI的名称。
 - URL中特殊的字符需要使用URL编码。
     
+可以使用urllig模块生成字符的URL编码::
+
+    In [1]: import urllib
+
+    In [2]: urllib.parse.quote_plus('kx%jj5/g')
+    Out[2]: 'kx%25jj5%2Fg'
+
+MYSQL dialect方言示例::
+
+    # default
+    engine = create_engine('mysql://scott:tiger@localhost/foo')
+
+    # mysqlclient (a maintained fork of MySQL-Python)
+    engine = create_engine('mysql+mysqldb://scott:tiger@localhost/foo')
+
+    # PyMySQL
+    engine = create_engine('mysql+pymysql://scott:tiger@localhost/foo')
+
+SQlite dialect方言示例::
+
+    # 相对路径
+    # sqlite://<nohostname>/<path>
+    # where <path> is relative:
+    engine = create_engine('sqlite:///foo.db')
+
+    # 绝对路径
+    # Unix/Mac - 4 initial slashes in total
+    engine = create_engine('sqlite:////absolute/path/to/foo.db')
+
+    # Windows
+    engine = create_engine('sqlite:///C:\\path\\to\\foo.db')
+
+    # Windows alternative using raw string
+    engine = create_engine(r'sqlite:///C:\path\to\foo.db')
     
+    # 在内存中创建数据库
+    engine = create_engine('sqlite://')
+    engine = create_engine('sqlite:///:memory:')
+
+其他数据库如 ``PostgreSQL`` 、 ``Oracle`` 、 ``Microsoft SQL Server`` 等请参考  `Database Urls <https://docs.sqlalchemy.org/en/13/core/engines.html?highlight=database%20url#database-urls>`_ 。
+
+- 声明映射。使用ORM时，配置过程首先描述我们将要处理的数据库表，然后定义我们自己的类，这些类将映射到这些表。在现代SQLAlchemy中，这两个任务通常使用称为Declarative的系统一起执行，这允许我们创建包含指令的类，以描述它们将映射到的实际数据库表。
+- 使用 ``declarative_base()`` 函数创建基类。
+
+创建基类::
+
+    >>> from sqlalchemy.ext.declarative import declarative_base    
+                                                                   
+    >>> Base = declarative_base()                                  
+                                                                   
+    >>> Base                                                       
+    sqlalchemy.ext.declarative.api.Base                            
+
+- 基于 ``Base`` 基类可以定义任意多的映射类。
+- 定义映射类时，需要指定表的名称(table name)，列名(names of columns)以及数据类型(datatypes of columns)。
+- 类定义时需要定义 `` __tablename__`` 属性，表明表的名称。
+- 类定义时需要至少一个 ``Column`` 列，用于定义表的主键，SQLAlchemy不会自动确认哪列是主键，并使用 ``primary_key=True`` 表明该字段是主键。
+- ``__repr__()`` 方法是可选的(optional)，用于改善打印实例输出。
+- 通过声明系统构建的映射类定义的有关表的信息，称为表元数据。
+- 映射类是一个 ``Table对象`` ，可以通过检查 ``__table__`` 属性来看到这个对象。
+
+定义一个User类，并映射到user表中去::
+
+    >>> from sqlalchemy import Column, Integer, String
+
+    >>> class User(Base):
+    ...     __tablename__ = 'users'
+    ...
+    ...     id = Column(Integer, primary_key=True)
+    ...     name = Column(String)
+    ...     fullname = Column(String)
+    ...     nickname = Column(String)
+    ...
+    ...     def __repr__(self):
+    ...         return "<User(name='%s', fullname='%s', nickname='%s')>" % (
+    ...             self.name, self.fullname, self.nickname)
+    ...
+
+    >>> User
+    __main__.User
+
+    >>> User.__table__
+    Table('users', MetaData(bind=None), Column('id', Integer(), table=<users>, primary_key=True, nullable=False), Column('name', String(), table=<users>), Column('fullname', String(), table=<users>), Column('nickname', String(), table=<users>), schema=None)
+
+- ``Table对象`` 是一个名为 ``MetaData`` 的较大集合的成员。使用 ``Declarative`` 声明时，可以使用声明性基类的 ``.metadata`` 属性来使用此对象。
+- 调用 ``MetaData.create_all()`` 方法来创建数据表。
+
+使用 ``MetaData.create_all()`` 方法来创建数据表::
+
+    >>> Base.metadata
+    MetaData(bind=None)
+    
+    >>> Base.metadata.create_all(engine)
+    2019-04-16 22:20:12,488 INFO sqlalchemy.engine.base.Engine SELECT CAST('test plain returns' AS VARCHAR(60)) AS anon_1
+    2019-04-16 22:20:12,489 INFO sqlalchemy.engine.base.Engine ()
+    2019-04-16 22:20:12,490 INFO sqlalchemy.engine.base.Engine SELECT CAST('test unicode returns' AS VARCHAR(60)) AS anon_1
+    2019-04-16 22:20:12,490 INFO sqlalchemy.engine.base.Engine ()
+    2019-04-16 22:20:12,491 INFO sqlalchemy.engine.base.Engine PRAGMA table_info("users")
+    2019-04-16 22:20:12,492 INFO sqlalchemy.engine.base.Engine ()
+    2019-04-16 22:20:12,493 INFO sqlalchemy.engine.base.Engine
+    CREATE TABLE users (
+            id INTEGER NOT NULL,
+            name VARCHAR,
+            fullname VARCHAR,
+            nickname VARCHAR,
+            PRIMARY KEY (id)
+    )
+    
+    
+    2019-04-16 22:20:12,494 INFO sqlalchemy.engine.base.Engine ()
+    2019-04-16 22:20:12,495 INFO sqlalchemy.engine.base.Engine COMMIT
+    
+    >>>
+    
+由于在定义engine时，开启了 ``echo=True`` 功能，因此在创建表时会显示生成的日志信息。
+
+- 实例化映射类就可以创建一个表对象。
+
+创建User实例::
+
+    >>> ed_user = User(name='ed', fullname='Ed Jones', nickname='edsnickname')
+    
+    >>> ed_user
+    <User(name='ed', fullname='Ed Jones', nickname='edsnickname')>
+    
+    >>> ed_user.name
+    'ed'
+    
+    >>> ed_user.fullname
+    'Ed Jones'
+    
+    >>> ed_user.nickname
+    'edsnickname'
+    
+    >>> str(ed_user.id)
+    'None'
+
+虽然在构建函数中未指定id的值，但是当我们访问它时，id属性仍然会产生None值。SQLAlchemy的检测通常在首次访问时为列映射属性生成此默认值。
+
+- 创建Session会话，通过Session处理数据库。
+- 使用 ``sessionmaker`` 创建Session会话。
+- 如果创建了Engine对象engine，在创建Session时可以指定Engine对象。
+
+创建Session会话::
+
+    >>> from sqlalchemy.orm import sessionmaker
+    
+    >>> Session = sessionmaker(bind=engine)
+    
+    >>> session = Session()
+    
+    >>> Session
+    sessionmaker(class_='Session', bind=Engine(sqlite:///:memory:), autoflush=True, autocommit=False, expire_on_commit=True)
+    
+    >>> session
+    <sqlalchemy.orm.session.Session at 0x12ede8477b8>
+
+- 万一之前没有定义Engine对象engine，可以分步定义Session会话。
+
+分步定义Session会话::
+
+    >>> Session = sessionmaker()
+    
+    >>> Session.configure(bind=engine)  # once engine is available
+    
+    >>> session = Session()
+
+- 将实例数据写入到Session会话中，此时Session实例处于挂起(pending)状态，尚未发起任何SQL，并且该对象尚未由数据库中的行表示。
+- 在未使用  ``session.commit()`` 方法前数据不会提交到数据库。
+- 使用 ``session.add(instance)`` 方法添加一条数据。
+- 使用 ``session.add_all(instances)`` 方法添加多条数据。
+
+将数据写入到Session会话中::
+
+    >>> session.add(ed_user)
+
+    >>> session.add_all([
+    ...      User(name='wendy', fullname='Wendy Williams', nickname='windy'),
+    ...      User(name='mary', fullname='Mary Contrary', nickname='mary'),
+    ...      User(name='fred', fullname='Fred Flintstone', nickname='freddy')])
+
+上面分两次一共写入4条数据。
+
+- 使用 ``Query`` 对象查询数据。
+
+查询数据::
+
+    >>> our_user = session.query(User).filter_by(name='ed').first()
+    2019-04-16 22:55:04,858 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+    2019-04-16 22:55:04,861 INFO sqlalchemy.engine.base.Engine INSERT INTO users (name, fullname, nickname) VALUES (?, ?, ?)
+    2019-04-16 22:55:04,862 INFO sqlalchemy.engine.base.Engine ('ed', 'Ed Jones', 'eddie')
+    2019-04-16 22:55:04,863 INFO sqlalchemy.engine.base.Engine INSERT INTO users (name, fullname, nickname) VALUES (?, ?, ?)
+    2019-04-16 22:55:04,864 INFO sqlalchemy.engine.base.Engine ('wendy', 'Wendy Williams', 'windy')
+    2019-04-16 22:55:04,866 INFO sqlalchemy.engine.base.Engine INSERT INTO users (name, fullname, nickname) VALUES (?, ?, ?)
+    2019-04-16 22:55:04,867 INFO sqlalchemy.engine.base.Engine ('mary', 'Mary Contrary', 'mary')
+    2019-04-16 22:55:04,868 INFO sqlalchemy.engine.base.Engine INSERT INTO users (name, fullname, nickname) VALUES (?, ?, ?)
+    2019-04-16 22:55:04,870 INFO sqlalchemy.engine.base.Engine ('fred', 'Fred Flintstone', 'freddy')
+    2019-04-16 22:55:04,872 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name = ?
+     LIMIT ? OFFSET ?
+    2019-04-16 22:55:04,872 INFO sqlalchemy.engine.base.Engine ('ed', 1, 0)
+
+    >>> our_user
+    <User(name='ed', fullname='Ed Jones', nickname='eddie')>
+
+    >>> ed_user is our_user
+    True
+    
+- 使用 ``session.new`` 获取挂起的数据。
+- 使用 ``session.dirty`` 获取脏数据。
+
+获取挂起数据或脏数据::
+
+    >>> session.dirty
+    IdentitySet([])
+    
+    >>> session.new
+    IdentitySet([<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>, <User(name='wendy', fullname='Wendy Williams', nickname='windy')>, <User(name='mary', fullname='Mary Contrary', nickname='mary')>, <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>])
+    
+    >>> ed_user.nickname = 'eddie'
+    
+    >>> session.new
+    IdentitySet([<User(name='ed', fullname='Ed Jones', nickname='eddie')>, <User(name='wendy', fullname='Wendy Williams', nickname='windy')>, <User(name='mary', fullname='Mary Contrary', nickname='mary')>, <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>])
+    
+    >>> session.dirty
+    IdentitySet([])
+
+- 使用  ``session.commit()`` 方法将数据提交到数据库。
+
+提交数据，并查询数据::
+
+    >>> session.commit()
+    2019-04-16 22:58:13,546 INFO sqlalchemy.engine.base.Engine COMMIT
+    
+    >>> ed_user.id
+    2019-04-16 22:58:59,226 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
+    2019-04-16 22:58:59,227 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.id = ?
+    2019-04-16 22:58:59,227 INFO sqlalchemy.engine.base.Engine (1,)
+    1
     
 懒人包dataset处理数据库
 --------------------------------------------
@@ -702,4 +943,5 @@ redis模块处理NoSQL非关系型数据库Redis
 - `SQLAlchemy 1.3 Documentation: Object Relational Tutorial <https://docs.sqlalchemy.org/en/13/orm/tutorial.html>`_
 - `SQLAlchemy 1.3 Documentation: Working with Engines and Connections <https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Engine.execute>`_
 - `SQLAlchemy 1.3 Documentation: Engine Configuration <https://docs.sqlalchemy.org/en/13/core/engines.html#sqlalchemy.create_engine>`_
+- `SQLAlchemy 1.3 Documentation: Database Urls <https://docs.sqlalchemy.org/en/13/core/engines.html?highlight=database%20url#database-urls>`_
 
