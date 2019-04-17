@@ -852,16 +852,11 @@ SQlite dialect方言示例::
 - 使用 ``session.add(instance)`` 方法添加一条数据。
 - 使用 ``session.add_all(instances)`` 方法添加多条数据。
 
-将数据写入到Session会话中::
+将一条数据写入到Session会话中::
 
     >>> session.add(ed_user)
 
-    >>> session.add_all([
-    ...      User(name='wendy', fullname='Wendy Williams', nickname='windy'),
-    ...      User(name='mary', fullname='Mary Contrary', nickname='mary'),
-    ...      User(name='fred', fullname='Fred Flintstone', nickname='freddy')])
-
-上面分两次一共写入4条数据。
+上面分写入1条数据。
 
 - 使用 ``Query`` 对象查询数据。
 
@@ -896,24 +891,56 @@ SQlite dialect方言示例::
 
     >>> session.dirty
     IdentitySet([])
-    
+
     >>> session.new
-    IdentitySet([<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>, <User(name='wendy', fullname='Wendy Williams', nickname='windy')>, <User(name='mary', fullname='Mary Contrary', nickname='mary')>, <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>])
-    
-    >>> ed_user.nickname = 'eddie'
-    
-    >>> session.new
-    IdentitySet([<User(name='ed', fullname='Ed Jones', nickname='eddie')>, <User(name='wendy', fullname='Wendy Williams', nickname='windy')>, <User(name='mary', fullname='Mary Contrary', nickname='mary')>, <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>])
-    
+    IdentitySet([])
+
+再添加多条数据::
+
+    >>> session.add_all([
+    ...      User(name='wendy', fullname='Wendy Williams', nickname='windy'),
+    ...      User(name='mary', fullname='Mary Contrary', nickname='mary'),
+    ...      User(name='fred', fullname='Fred Flintstone', nickname='freddy')])
+
+上面写入3条数据。
+
+再获取挂起数据或脏数据::
+
     >>> session.dirty
     IdentitySet([])
+
+    >>> session.new
+    IdentitySet([<User(name='wendy', fullname='Wendy Williams', nickname='windy')>, <User(name='mary', fullname='Mary Contrary', nickname='mary')>, <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>])
+
+修改Ed’s nickname::
+
+    >>> ed_user.nickname = 'eddie'
+
+再获取挂起数据或脏数据::
+
+    >>> session.dirty
+    IdentitySet([<User(name='ed', fullname='Ed Jones', nickname='eddie')>])
+
+    >>> session.new
+    IdentitySet([<User(name='wendy', fullname='Wendy Williams', nickname='windy')>, <User(name='mary', fullname='Mary Contrary', nickname='mary')>, <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>])
+    
+
+
 
 - 使用  ``session.commit()`` 方法将数据提交到数据库。
 
 提交数据，并查询数据::
 
     >>> session.commit()
-    2019-04-16 22:58:13,546 INFO sqlalchemy.engine.base.Engine COMMIT
+    2019-04-17 20:04:58,364 INFO sqlalchemy.engine.base.Engine UPDATE users SET nickname=? WHERE users.id = ?
+    2019-04-17 20:04:58,365 INFO sqlalchemy.engine.base.Engine ('eddie', 1)
+    2019-04-17 20:04:58,365 INFO sqlalchemy.engine.base.Engine INSERT INTO users (name, fullname, nickname) VALUES (?, ?, ?)
+    2019-04-17 20:04:58,365 INFO sqlalchemy.engine.base.Engine ('wendy', 'Wendy Williams', 'windy')
+    2019-04-17 20:04:58,365 INFO sqlalchemy.engine.base.Engine INSERT INTO users (name, fullname, nickname) VALUES (?, ?, ?)
+    2019-04-17 20:04:58,365 INFO sqlalchemy.engine.base.Engine ('mary', 'Mary Contrary', 'mary')
+    2019-04-17 20:04:58,366 INFO sqlalchemy.engine.base.Engine INSERT INTO users (name, fullname, nickname) VALUES (?, ?, ?)
+    2019-04-17 20:04:58,367 INFO sqlalchemy.engine.base.Engine ('fred', 'Fred Flintstone', 'freddy')
+    2019-04-17 20:04:58,367 INFO sqlalchemy.engine.base.Engine COMMIT
     
     >>> ed_user.id
     2019-04-16 22:58:59,226 INFO sqlalchemy.engine.base.Engine BEGIN (implicit)
