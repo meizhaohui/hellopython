@@ -735,7 +735,7 @@ SQlite dialect方言示例::
 
 - 基于 ``Base`` 基类可以定义任意多的映射类。
 - 定义映射类时，需要指定表的名称(table name)，列名(names of columns)以及数据类型(datatypes of columns)。
-- 类定义时需要定义 `` __tablename__`` 属性，表明表的名称。
+- 类定义时需要定义  ``__tablename__``  属性，表明表的名称。
 - 类定义时需要至少一个 ``Column`` 列，用于定义表的主键，SQLAlchemy不会自动确认哪列是主键，并使用 ``primary_key=True`` 表明该字段是主键。
 - ``__repr__()`` 方法是可选的(optional)，用于改善打印实例输出。
 - 通过声明系统构建的映射类定义的有关表的信息，称为表元数据。
@@ -950,6 +950,348 @@ SQlite dialect方言示例::
     2019-04-16 22:58:59,227 INFO sqlalchemy.engine.base.Engine (1,)
     1
     
+- 查询数据库数据信息
+- 通过 ``Session`` 的 ``query()`` 方法创建一个 ``Query`` 对象。
+- ``Query`` 对象的常用方法见示例，详细可参考官网 `Query API <https://docs.sqlalchemy.org/en/13/orm/query.html#sqlalchemy.orm.query.Query>`_
+
+查询users表中的name和fullname相关的数据::
+
+    >>> users = session.query(User.name, User.fullname)
+
+    >>> users
+    <sqlalchemy.orm.query.Query at 0x17a37ee4048>
+
+    >>> users.column_descriptions  # 返回有关此Query将返回的列的元数据
+    [{'name': 'name',
+      'type': String(),
+      'aliased': False,
+      'expr': <sqlalchemy.orm.attributes.InstrumentedAttribute at 0x17a37ddb570>,
+      'entity': __main__.User},
+     {'name': 'fullname',
+      'type': String(),
+      'aliased': False,
+      'expr': <sqlalchemy.orm.attributes.InstrumentedAttribute at 0x17a37ddb620>,
+      'entity': __main__.User}]
+      
+    >>> users.count()   # 返回此Query将返回的行数
+    2019-04-18 20:55:52,252 INFO sqlalchemy.engine.base.Engine SELECT count(*) AS count_1
+    FROM (SELECT users.name AS users_name, users.fullname AS users_fullname
+    FROM users) AS anon_1
+    2019-04-18 20:55:52,252 INFO sqlalchemy.engine.base.Engine ()
+    4
+
+    >>> users.all()  # 查询所有的数据
+    2019-04-18 20:56:30,732 INFO sqlalchemy.engine.base.Engine SELECT users.name AS users_name, users.fullname AS users_fullname
+    FROM users
+    2019-04-18 20:56:30,733 INFO sqlalchemy.engine.base.Engine ()
+    [('ed', 'Ed Jones'),
+     ('wendy', 'Wendy Williams'),
+     ('mary', 'Mary Contrary'),
+     ('fred', 'Fred Flintstone')]
+     
+    >>> users.first()  # 返回第一个查询结果
+    2019-04-18 21:00:58,964 INFO sqlalchemy.engine.base.Engine SELECT users.name AS users_name, users.fullname AS users_fullname
+    FROM users
+     LIMIT ? OFFSET ?
+    2019-04-18 21:00:58,967 INFO sqlalchemy.engine.base.Engine (1, 0)
+    ('ed', 'Ed Jones')
+
+    >>> users.limit(2)  # 限制查询个数
+    <sqlalchemy.orm.query.Query at 0x17a39d407b8>
+
+    >>> users.limit(2).all()
+    2019-04-18 21:03:01,424 INFO sqlalchemy.engine.base.Engine SELECT users.name AS users_name, users.fullname AS users_fullname
+    FROM users
+     LIMIT ? OFFSET ?
+    2019-04-18 21:03:01,425 INFO sqlalchemy.engine.base.Engine (2, 0)
+    [('ed', 'Ed Jones'), ('wendy', 'Wendy Williams')]
+
+    >>> users.order_by(User.name)  # 按User.name排序
+    <sqlalchemy.orm.query.Query at 0x17a37e10470>
+
+    >>> users.order_by(User.name).all()
+    2019-04-18 21:06:00,393 INFO sqlalchemy.engine.base.Engine SELECT users.name AS users_name, users.fullname AS users_fullname
+    FROM users ORDER BY users.name
+    2019-04-18 21:06:00,394 INFO sqlalchemy.engine.base.Engine ()
+    [('ed', 'Ed Jones'),
+     ('fred', 'Fred Flintstone'),
+     ('mary', 'Mary Contrary'),
+     ('wendy', 'Wendy Williams')]
+
+    >>> users.filter(User.name == 'mary')  # 过滤数据
+    <sqlalchemy.orm.query.Query at 0x17a37e04898>
+
+    >>> users.filter(User.name == 'mary').first()
+    2019-04-18 21:24:54,028 INFO sqlalchemy.engine.base.Engine SELECT users.name AS users_name, users.fullname AS users_fullname
+    FROM users
+    WHERE users.name = ?
+     LIMIT ? OFFSET ?
+    2019-04-18 21:24:54,029 INFO sqlalchemy.engine.base.Engine ('mary', 1, 0)
+    ('mary', 'Mary Contrary')
+    
+    >>> users.filter_by(name='mary')   # 通过key关键字过滤数据
+    <sqlalchemy.orm.query.Query at 0x17a3a0567f0>
+
+    >>> users.filter_by(name='mary').first()
+    2019-04-18 21:25:55,339 INFO sqlalchemy.engine.base.Engine SELECT users.name AS users_name, users.fullname AS users_fullname
+    FROM users
+    WHERE users.name = ?
+     LIMIT ? OFFSET ?
+    2019-04-18 21:25:55,340 INFO sqlalchemy.engine.base.Engine ('mary', 1, 0)
+    ('mary', 'Mary Contrary')
+     
+    >>> first_user = session.query(User).get(1)  # 通过primary key主键返回对象实例
+
+    >>> first_user
+    <User(name='ed', fullname='Ed Jones', nickname='edsnickname')>
+    
+        >>> for name, fullname in session.query(User.name, User.fullname):
+    ...     print(name, fullname)
+    ...
+    2019-04-18 21:40:18,566 INFO sqlalchemy.engine.base.Engine SELECT users.name AS users_name, users.fullname AS users_fullname
+    FROM users
+    2019-04-18 21:40:18,567 INFO sqlalchemy.engine.base.Engine ()
+    ed Ed Jones
+    wendy Wendy Williams
+    mary Mary Contrary
+    fred Fred Flintstone
+
+    >>> for row in session.query(User, User.name).all():
+    ...     print(row.User, row.name)  # 查询到的对象可以像普通Python对象对待
+    ...
+    2019-04-18 21:42:28,394 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    2019-04-18 21:42:28,395 INFO sqlalchemy.engine.base.Engine ()
+    <User(name='ed', fullname='Ed Jones', nickname='edsnickname')> ed
+    <User(name='wendy', fullname='Wendy Williams', nickname='windy')> wendy
+    <User(name='mary', fullname='Mary Contrary', nickname='mary')> mary
+    <User(name='fred', fullname='Fred Flintstone', nickname='freddy')> fred
+
+    >>> for row in session.query(User.name.label('name_label')).all():  # 可以为查询的column列设置标签名
+    ...     print(row.name_label)  # 使用标签名
+    ...
+    2019-04-18 21:43:22,465 INFO sqlalchemy.engine.base.Engine SELECT users.name AS name_label
+    FROM users
+    2019-04-18 21:43:22,466 INFO sqlalchemy.engine.base.Engine ()
+    ed
+    wendy
+    mary
+    fred
+
+    >>> from sqlalchemy.orm import aliased
+
+    >>> user_alias = aliased(User, name='aliasuser')  # 定义别名，即将User类设置别名为aliasuser
+
+    >>> user_alias
+    <AliasedClass at 0x17a37e04c88; User>
+
+    >>> for row in session.query(user_alias, user_alias.name).all():
+    ...     print(row.aliasuser)
+    ...
+    2019-04-18 21:50:09,776 INFO sqlalchemy.engine.base.Engine SELECT aliasuser.id AS aliasuser_id, aliasuser.name AS aliasuser_name, aliasuser.fullname AS aliasuser_fullname, aliasuser.nickname AS aliasuser_nickname
+    FROM users AS aliasuser
+    2019-04-18 21:50:09,776 INFO sqlalchemy.engine.base.Engine ()
+    <User(name='ed', fullname='Ed Jones', nickname='edsnickname')>
+    <User(name='wendy', fullname='Wendy Williams', nickname='windy')>
+    <User(name='mary', fullname='Mary Contrary', nickname='mary')>
+    <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>
+    
+    >>> for u in session.query(User).order_by(User.id)[1:3]:  # 使用LIMIT和OFFSET偏移量
+    ...      print(u)
+    ...
+    2019-04-18 21:52:48,402 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users ORDER BY users.id
+     LIMIT ? OFFSET ?
+    2019-04-18 21:52:48,403 INFO sqlalchemy.engine.base.Engine (2, 1)
+    <User(name='wendy', fullname='Wendy Williams', nickname='windy')>
+    <User(name='mary', fullname='Mary Contrary', nickname='mary')>
+    
+    >>> for user in session.query(User).filter(User.name=='ed').filter(User.fullname=='Ed Jones'):  # 多次过滤
+    ...     print(user)
+    ...
+    2019-04-18 21:55:14,653 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name = ? AND users.fullname = ?
+    2019-04-18 21:55:14,654 INFO sqlalchemy.engine.base.Engine ('ed', 'Ed Jones')
+    <User(name='ed', fullname='Ed Jones', nickname='edsnickname')>
+    
+- 常用过滤运算符
+- ``equals``  == 相等
+- ``not equals`` != 不相等
+- ``LIKE`` like (大小写敏感)像
+- ``ILIKE`` ilike (大小写不敏感)像
+- ``IN`` in\_ 在其中
+- ``NOT IN`` ~ in\_ 不在其中
+- ``IS NULL`` == None 为空
+- ``IS NOT NULL`` != None 不为空
+- ``AND`` 多级过滤或使用and_()
+- ``OR`` 多级过滤或使用or_()
+- ``MATCH``  match匹配，match()使用特定于数据库的MATCH或CONTAINS函数; 它的行为会因后端而异，并且在某些后端(例如SQLite)上不可用。
+
+过滤运算示例::
+
+    >>> myquery = session.query(User)
+
+    >>> myquery
+    <sqlalchemy.orm.query.Query at 0x17a39b57908>
+
+    >>> myquery.filter(User.name == 'ed')
+    <sqlalchemy.orm.query.Query at 0x17a39d59dd8>
+
+    >>> myquery.filter(User.name == 'ed').all()  # 相等
+    2019-04-18 22:05:45,169 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name = ?
+    2019-04-18 22:05:45,172 INFO sqlalchemy.engine.base.Engine ('ed',)
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>]
+
+    >>> myquery.filter(User.name != 'ed').all()  # 不相等
+    2019-04-18 22:06:37,084 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name != ?
+    2019-04-18 22:06:37,085 INFO sqlalchemy.engine.base.Engine ('ed',)
+    [<User(name='wendy', fullname='Wendy Williams', nickname='windy')>,
+     <User(name='mary', fullname='Mary Contrary', nickname='mary')>,
+     <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>]
+     
+    >>> myquery.filter(User.name.like('%ed%')).all()  # (区分大小写)像
+    2019-04-18 22:07:11,593 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name LIKE ?
+    2019-04-18 22:07:11,594 INFO sqlalchemy.engine.base.Engine ('%ed%',)
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>,
+     <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>]
+     
+    >>> myquery.filter(User.name.ilike('%ed%')).all() # (不区分大小写)像
+    2019-04-18 22:07:49,114 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE lower(users.name) LIKE lower(?)
+    2019-04-18 22:07:49,115 INFO sqlalchemy.engine.base.Engine ('%ed%',)
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>,
+     <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>]
+     
+    >>> myquery.filter(User.name.in_(['ed', 'wendy', 'jack'])).all()  # 在其中
+    2019-04-18 22:09:00,462 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name IN (?, ?, ?)
+    2019-04-18 22:09:00,463 INFO sqlalchemy.engine.base.Engine ('ed', 'wendy', 'jack')
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>,
+     <User(name='wendy', fullname='Wendy Williams', nickname='windy')>]
+
+    >>> myquery.filter(~User.name.in_(['ed', 'wendy', 'jack'])).all()  # 不在其中
+    2019-04-18 22:10:06,110 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name NOT IN (?, ?, ?)
+    2019-04-18 22:10:06,111 INFO sqlalchemy.engine.base.Engine ('ed', 'wendy', 'jack')
+    [<User(name='mary', fullname='Mary Contrary', nickname='mary')>,
+     <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>]
+     
+    >>> myquery.filter(User.name == None).all()  # 是空
+    2019-04-18 22:11:13,807 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name IS NULL
+    2019-04-18 22:11:13,808 INFO sqlalchemy.engine.base.Engine ()
+    []
+
+    >>> myquery.filter(User.name != None).all()  # 非空
+    2019-04-18 22:11:19,570 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name IS NOT NULL
+    2019-04-18 22:11:19,571 INFO sqlalchemy.engine.base.Engine ()
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>,
+     <User(name='wendy', fullname='Wendy Williams', nickname='windy')>,
+     <User(name='mary', fullname='Mary Contrary', nickname='mary')>,
+     <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>]
+     
+    >>> from sqlalchemy import and_
+
+    >>> myquery.filter(and_(User.name == 'ed', User.fullname == 'Ed Jones'))
+    <sqlalchemy.orm.query.Query at 0x17a39d54f98>
+
+    >>> myquery.filter(and_(User.name == 'ed', User.fullname == 'Ed Jones')).all()  # AND且操作
+    2019-04-18 22:12:24,261 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name = ? AND users.fullname = ?
+    2019-04-18 22:12:24,261 INFO sqlalchemy.engine.base.Engine ('ed', 'Ed Jones')
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>]
+
+    >>> myquery.filter(User.name == 'ed', User.fullname == 'Ed Jones').all()
+    2019-04-18 22:13:35,250 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name = ? AND users.fullname = ?
+    2019-04-18 22:13:35,251 INFO sqlalchemy.engine.base.Engine ('ed', 'Ed Jones')
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>]
+
+    >>> from sqlalchemy import or_
+
+    >>> myquery.filter(or_(User.name == 'ed', User.name == 'wendy'))
+    <sqlalchemy.orm.query.Query at 0x17a39d4ac88>
+
+    >>> myquery.filter(or_(User.name == 'ed', User.name == 'wendy')).all()  # OR或操作
+    2019-04-18 22:14:16,643 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE users.name = ? OR users.name = ?
+    2019-04-18 22:14:16,645 INFO sqlalchemy.engine.base.Engine ('ed', 'wendy')
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>,
+     <User(name='wendy', fullname='Wendy Williams', nickname='windy')>]
+
+- 使用文本SQL
+- 可以使用 ``text()`` 来构建文本SQL
+    
+使用文本SQL::
+
+    >>> myquery.filter(text("id<3")).order_by(text('id')).all()
+    2019-04-18 22:22:06,749 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE id<3 ORDER BY id
+    2019-04-18 22:22:06,750 INFO sqlalchemy.engine.base.Engine ()
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>,
+     <User(name='wendy', fullname='Wendy Williams', nickname='windy')>]
+     
+    >>> for user in myquery.filter(text("id<3")).order_by(text('id')).all():
+    ...     print(user.id, user.name)
+    ...
+    2019-04-18 22:22:54,586 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE id<3 ORDER BY id
+    2019-04-18 22:22:54,587 INFO sqlalchemy.engine.base.Engine ()
+    1 ed
+    2 wendy
+    
+- 可以在字符串的SQL中使用冒号来指定绑定参数，需要使用 ``params()`` 方法。
+
+使用冒号绑定参数::
+
+    >>> myquery.filter(text("id<:value and name=:name")).params(value=224, name='fred').order_by(User.id).one()
+    2019-04-18 22:25:20,752 INFO sqlalchemy.engine.base.Engine SELECT users.id AS users_id, users.name AS users_name, users.fullname AS users_fullname, users.nickname AS users_nickname
+    FROM users
+    WHERE id<? and name=? ORDER BY users.id
+    2019-04-18 22:25:20,752 INFO sqlalchemy.engine.base.Engine (224, 'fred')
+    <User(name='fred', fullname='Fred Flintstone', nickname='freddy')>
+    
+- 要使用完全基于字符串的语句，需要将完整语句的 ``text()`` 传递给 ``from_statement()`` 函数。
+- 如果没有其他说明符，字符串SQL中的列将根据名称与模型列匹配。
+
+例如下面我们只使用星号表示加载所有列::
+
+    >>> myquery.from_statement(text("SELECT * FROM users where name=:name")).params(name='ed').all()
+    2019-04-18 22:30:43,455 INFO sqlalchemy.engine.base.Engine SELECT * FROM users where name=?
+    2019-04-18 22:30:43,455 INFO sqlalchemy.engine.base.Engine ('ed',)
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>]
+
+- 匹配名称上的列适用于简单的情况，但在处理包含重复列名的复杂语句或使用不易与特定名称匹配的匿名ORM构造时可能会变得难以处理。
+
+查询指定列的数据::
+
+    >>> stmt = text("SELECT name, id, fullname, nickname FROM users where name=:name")
+
+    >>> stmt = stmt.columns(User.name, User.id, User.fullname, User.nickname)
+
+    >>> myquery.from_statement(stmt).params(name='ed').all()
+    2019-04-18 22:34:44,974 INFO sqlalchemy.engine.base.Engine SELECT name, id, fullname, nickname FROM users where name=?
+    2019-04-18 22:34:44,975 INFO sqlalchemy.engine.base.Engine ('ed',)
+    [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>]
+    
 懒人包dataset处理数据库
 --------------------------------------------
 
@@ -971,4 +1313,4 @@ redis模块处理NoSQL非关系型数据库Redis
 - `SQLAlchemy 1.3 Documentation: Working with Engines and Connections <https://docs.sqlalchemy.org/en/13/core/connections.html#sqlalchemy.engine.Engine.execute>`_
 - `SQLAlchemy 1.3 Documentation: Engine Configuration <https://docs.sqlalchemy.org/en/13/core/engines.html#sqlalchemy.create_engine>`_
 - `SQLAlchemy 1.3 Documentation: Database Urls <https://docs.sqlalchemy.org/en/13/core/engines.html?highlight=database%20url#database-urls>`_
-
+- `SQLAlchemy 1.3 Documentation: Query API <https://docs.sqlalchemy.org/en/13/orm/query.html#sqlalchemy.orm.query.Query>`_
