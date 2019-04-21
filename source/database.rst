@@ -1291,7 +1291,260 @@ SQlite dialect方言示例::
     2019-04-18 22:34:44,974 INFO sqlalchemy.engine.base.Engine SELECT name, id, fullname, nickname FROM users where name=?
     2019-04-18 22:34:44,975 INFO sqlalchemy.engine.base.Engine ('ed',)
     [<User(name='ed', fullname='Ed Jones', nickname='edsnickname')>]
+
+通过将SQLite数据保存到本地文件sqlalchemy.db中，创建数据库信息::
+
+    >>> from sqlalchemy import create_engine
+
+    >>> engine = create_engine('sqlite:///sqlalchemy.db')
+
+    >>> from sqlalchemy.ext.declarative import declarative_base
+
+    >>> Base = declarative_base()
+
+    >>> from sqlalchemy import Column, Integer, String
+
+    >>> class User(Base):
+    ...     __tablename__ = 'users'
+    ...
+    ...     id = Column(Integer, primary_key=True)
+    ...     name = Column(String)
+    ...     fullname = Column(String)
+    ...     nickname = Column(String)
+    ...
+    ...     def __repr__(self):
+    ...         return "<User(name='%s', fullname='%s', nickname='%s')>" % (
+    ...             self.name, self.fullname, self.nickname)
+    ...
+
+    >>> User
+    __main__.User
+
+    >>> Base.metadata.create_all(engine)
+
+    >>> ed_user = User(name='ed', fullname='Ed Jones', nickname='edsnickname')
+
+    >>> from sqlalchemy.orm import sessionmaker
+
+    >>> Session = sessionmaker(bind=engine)
+
+    >>> session = Session()
+
+    >>> session.add(ed_user)
+
+    >>> session.add_all([
+    ...     User(name='wendy', fullname='Wendy Williams', nickname='windy'),
+    ...     User(name='mary', fullname='Mary Contrary', nickname='mary'),
+    ...     User(name='fred', fullname='Fred Flintstone', nickname='freddy')])
+
+    >>> session.commit()
+
+    >>> users = session.query(User.name, User.fullname)
+
+    >>> users.all()
+    [('ed', 'Ed Jones'),
+     ('wendy', 'Wendy Williams'),
+     ('mary', 'Mary Contrary'),
+     ('fred', 'Fred Flintstone')]
+
+- 统计数量
+- 使用 ``Query`` 对象的 ``count()`` 方法。
+- 使用 ``sqlalchemy`` 的 ``func`` 构造器的 ``count()`` 方法，这种方法对子查询更方便。
+
+统计查询数据的数量::
+
+    >>> session.query(User).filter(User.name.like('%ed')).count()
+    2
+
+    >>> from sqlalchemy import func
+
+    >>> session.query(func.count(User.name), User.name).group_by(User.name).all()
+    [(1, 'ed'), (1, 'fred'), (1, 'mary'), (1, 'wendy')]
     
+    >>> session.query(func.count('*')).select_from(User).scalar()  # 使用select_from方法计数，等价于在数据库中执行"SELECT count(*) FROM table"
+    4
+
+    >>> session.query(func.count(User.id)).scalar()  # 如果我们直接用User主键表示计数，则可以删除select_from()的用法
+    4
+    
+- 建立相对关系(Relationship)。
+- 建立双向关系：在 ``relationship()`` 指令中，参数 ``relationship.back_populates`` 被指定为引用补充属性名称，通过这样做，每个 ``relationship()`` 可以建立两个类之间的双向关系。
+- 使用双向关系时，在一个方向上添加的元素会自动在另一个方向上可见。
+
+考虑添加第二张表address，用于存储用户的邮件地址，定义一个Address类，建立一个 ``one to many`` 一对多的关系模型::
+
+    >>> from sqlalchemy import ForeignKey
+
+    >>> from sqlalchemy.orm import relationship
+
+    >>> class Address(Base):
+    ...     __tablename__ = 'addresses'
+    ...     id = Column(Integer, primary_key=True)  # 设置id为主键
+    ...     email_address = Column(String, nullable=False)  # 设置email地址为String类型，非空
+    ...     user_id = Column(Integer, ForeignKey('users.id'))  # 设置user_id，外键是users表中的id
+    ...
+    ...     user = relationship("User", back_populates="addresses")  # 建立相对关系，告诉ORM使用Address.user属性将Address类本身链接到User类，使用Address.user则可以访问到地址对应的User类
+    ...
+    ...     def __repr__(self):
+    ...         return "<Address(email_address='%s')>" % self.email_address
+    ...
+
+    >>> User.addresses = relationship("Address", order_by=Address.id, back_populates="user")  # 将User.addresses映射到Address类的id属性上，通过User.addresses可以获取到用户所有的邮件地址的id列表
+
+    >>> Address
+    __main__.Address
+
+    >>> User
+    __main__.User
+    
+    >>> Base.metadata.create_all(engine)
+    
+创建表了后，在SQLite3中查看已经新建了addresses表::
+
+    sqlite>
+    sqlite> .table
+    addresses  users
+    sqlite>
+
+使用相关对象，创建一个新的User实例，并添加邮件地址::
+
+    >>> jack = User(name='jack', fullname='Jack Bean', nickname='gjffdd')
+
+    >>> jack.addresses
+    []
+
+    >>> jack.addresses = [Address(email_address='jack@google.com'), Address(email_address='j25@yahoo.com')]
+
+    >>> jack.addresses[0]
+    <Address(email_address='jack@google.com')>
+
+    >>> jack.addresses[1]
+    <Address(email_address='j25@yahoo.com')>
+
+    >>> jack.addresses[0].user
+    <User(name='jack', fullname='Jack Bean', nickname='gjffdd')>
+
+    >>> jack.addresses[1].user
+    <User(name='jack', fullname='Jack Bean', nickname='gjffdd')>
+
+- 添加数据到数据库时，会使用 ``cascading`` 级联会话同时添加对象到数据库。
+
+将用户jack添加到数据库中，由于级联操作，会自动将Address地址相关数据添加到数据库::
+
+    >>> session.add(jack)
+
+    >>> session.commit()
+
+在SQLite3中查看users表和addresses表信息::
+
+    sqlite> select * from addresses;        
+    1|jack@google.com|5                     
+    2|j25@yahoo.com|5                       
+    sqlite> select * from  users;           
+    1|ed|Ed Jones|edsnickname               
+    2|wendy|Wendy Williams|windy            
+    3|mary|Mary Contrary|mary               
+    4|fred|Fred Flintstone|freddy           
+    5|jack|Jack Bean|gjffdd                 
+    sqlite>                                 
+    
+- 使用 ``join`` 进行联合查询。
+- 使用 ``Query.join()`` 方法最容易实现实际的SQL JOIN语法。
+
+使用 ``Query.filter()`` 在User和Address之间构造一个简单的隐式连接，并使用 ``Query.join()`` 方法实现连接:
+
+.. code-block:: python
+    :linenos:
+    :emphasize-lines: 11
+    
+    >>> for u, a in session.query(User, Address).\
+    ...                     filter(User.id==Address.user_id).\
+    ...                     filter(Address.email_address=='jack@google.com').\
+    ...                     all():
+    ...     print(u)
+    ...     print(a)
+    ...
+    <User(name='jack', fullname='Jack Bean', nickname='gjffdd')>
+    <Address(email_address='jack@google.com')>
+
+    >>> session.query(User).join(Address).\
+    ...         filter(Address.email_address=='jack@google.com').\
+    ...         all()
+    [<User(name='jack', fullname='Jack Bean', nickname='gjffdd')>]
+    
+``Query.join()`` 知道如何在User和Address之间进行连接，因为它们之间只有一个外键。
+
+如果没有外键或有多个外键时，使用以下方式来进行连接::
+
+    query.join(Address, User.id==Address.user_id)    # explicit condition [ 明确的条件] 
+    query.join(User.addresses)                       # specify relationship from left to right [ 从左到右指定关系] 
+    query.join(Address, User.addresses)              # same, with explicit target [ 同样，有明确的目标] 
+    query.join('addresses')                          # same, using a string [ 同样，使用字符串] 
+    
+- 使用 ``aliased`` 对表名进行重命名。这样可以对表名使用一次或多次。
+
+对Address表进行重命名::
+
+    >>> for username, email1, email2 in \
+    ...     session.query(User.name, adalias1.email_address, adalias2.email_address). \
+    ...     join(adalias1, User.addresses).join(adalias2, User.addresses). \
+    ...     filter(adalias1.email_address=='jack@google.com'). \
+    ...     filter(adalias2.email_address=='j25@yahoo.com'):
+    ...     print(username, email1, email2)
+    ...
+    jack jack@google.com j25@yahoo.com
+    
+- 使用 ``session.delete(instance)`` 删除instance实例数据。
+- SQLAlchemy不会自动级联删除(SQLAlchemy doesn’t assume that deletes cascade)，必须要明确指定才会 ``cascade`` 级联删除。
+- 级联操作相关请参考官网说明 `SQLAlchemy 1.3 Documentation:Cascades <https://docs.sqlalchemy.org/en/13/orm/cascades.html#unitofwork-cascades>`_
+
+删除用户jack::
+
+    >>> jack
+    <User(name='jack', fullname='Jack Bean', nickname='gjffdd')>
+
+    >>> session.delete(jack)
+
+    >>> session.query(User).filter_by(name='jack').count()
+    0
+
+    >>> session.query(Address).filter(Address.email_address.in_(['jack@google.com', 'j25@yahoo.com'])).count()
+    2
+
+在SQLite3中查看users表和addresses表信息::
+
+    sqlite> select * from addresses;        
+    1|jack@google.com|5                     
+    2|j25@yahoo.com|5                       
+    sqlite> select * from  users;           
+    1|ed|Ed Jones|edsnickname               
+    2|wendy|Wendy Williams|windy            
+    3|mary|Mary Contrary|mary               
+    4|fred|Fred Flintstone|freddy           
+    5|jack|Jack Bean|gjffdd                 
+    sqlite>  
+    
+说明此时jack并没有被删除掉。
+
+使用 ``session.commit()`` 提交事务::
+
+    >>> session.commit()
+
+再在SQLite3中查看users表和addresses表信息::
+
+
+    sqlite> select * from addresses;        
+    1|jack@google.com|5                     
+    2|j25@yahoo.com|5                       
+    sqlite> select * from  users;           
+    1|ed|Ed Jones|edsnickname               
+    2|wendy|Wendy Williams|windy            
+    3|mary|Mary Contrary|mary               
+    4|fred|Fred Flintstone|freddy           
+    sqlite> 
+    
+说明jack用户已经从数据库中删除掉，但其email邮箱信息并不会自动删除。
+
 懒人包dataset处理数据库
 --------------------------------------------
 
