@@ -1548,6 +1548,312 @@ SQlite dialect方言示例::
 懒人包dataset处理数据库
 --------------------------------------------
 
+在Python中，数据库并不是存储大量结构化数据的最简单的解决方案。dataset提供了一个简单的抽象层(可以删除大多数直接的SQL语句而无需完整的ORM模型)，本质上，数据库可以像JSON文件或NoSQL存储一样使用。
+
+- dataset的安装
+
+使用pip安装::
+
+    $ pip install dataset
+    Looking in indexes: http://mirrors.aliyun.com/pypi/simple/
+    Collecting dataset
+      Downloading http://mirrors.aliyun.com/pypi/packages/d5/02/a4c77a15d004f1307a579e577974fa9292a63e93abff3e40ad993cf597c7/dataset-1.1.2-py2.py3-none-any.whl
+    Collecting alembic>=0.6.2 (from dataset)
+      Downloading http://mirrors.aliyun.com/pypi/packages/fc/42/8729e2491fa9b8eae160d1cbb429f61712bfc2d779816488c25cfdabf7b8/alembic-1.0.9.tar.gz (1.0MB)
+        100% |████████████████████████████████| 1.0MB 3.9MB/s
+    Requirement already satisfied: six>=1.11.0 in d:\programfiles\python362\lib\site-packages (from dataset) (1.12.0)
+    Requirement already satisfied: sqlalchemy>=1.1.2 in d:\programfiles\python362\lib\site-packages (from dataset) (1.3.2)
+    Collecting Mako (from alembic>=0.6.2->dataset)
+      Downloading http://mirrors.aliyun.com/pypi/packages/a1/bb/f4e5c056e883915c37bb5fb6fab7f00a923c395674f83bfb45c9ecf836b6/Mako-1.0.9.tar.gz (459kB)
+        100% |████████████████████████████████| 460kB 10.3MB/s
+    Collecting python-editor>=0.3 (from alembic>=0.6.2->dataset)
+      Downloading http://mirrors.aliyun.com/pypi/packages/c6/d3/201fc3abe391bbae6606e6f1d598c15d367033332bd54352b12f35513717/python_editor-1.0.4-py3-none-any.whl
+    Requirement already satisfied: python-dateutil in d:\programfiles\python362\lib\site-packages (from alembic>=0.6.2->dataset) (2.8.0)
+    Requirement already satisfied: MarkupSafe>=0.9.2 in d:\programfiles\python362\lib\site-packages (from Mako->alembic>=0.6.2->dataset) (1.1.1)
+    Installing collected packages: Mako, python-editor, alembic, dataset
+      Running setup.py install for Mako ... done
+      Running setup.py install for alembic ... done
+    Successfully installed Mako-1.0.9 alembic-1.0.9 dataset-1.1.2 python-editor-1.0.4
+    
+- 使用dataset。
+
+导入dataset包::
+
+    >>> import dataset
+
+- 使用 ``dataset.connect`` 创建数据库连接。
+- ``dataset`` \_\_init\_\_文件中只有一个方法 ``connect``。
+
+\_\_init\_\_文件内容::
+
+    import os
+    import warnings
+    from dataset.database import Database
+    from dataset.table import Table
+    from dataset.util import row_type
+
+    # shut up useless SA warning:
+    warnings.filterwarnings(
+        'ignore', 'Unicode type received non-unicode bind param value.')
+    warnings.filterwarnings(
+        'ignore', 'Skipping unsupported ALTER for creation of implicit constraint')
+
+    __all__ = ['Database', 'Table', 'freeze', 'connect']
+    __version__ = '1.1.2'
+
+
+    def connect(url=None, schema=None, reflect_metadata=True, engine_kwargs=None,
+                reflect_views=True, ensure_schema=True, row_type=row_type):
+        """ Opens a new connection to a database.
+
+        *url* can be any valid `SQLAlchemy engine URL`_.  If *url* is not defined
+        it will try to use *DATABASE_URL* from environment variable.  Returns an
+        instance of :py:class:`Database <dataset.Database>`. Set *reflect_metadata*
+        to False if you don't want the entire database schema to be pre-loaded.
+        This significantly speeds up connecting to large databases with lots of
+        tables. *reflect_views* can be set to False if you don't want views to be
+        loaded.  Additionally, *engine_kwargs* will be directly passed to
+        SQLAlchemy, e.g.  set *engine_kwargs={'pool_recycle': 3600}* will avoid `DB
+        connection timeout`_. Set *row_type* to an alternate dict-like class to
+        change the type of container rows are stored in.::
+
+            db = dataset.connect('sqlite:///factbook.db')
+
+        .. _SQLAlchemy Engine URL: http://docs.sqlalchemy.org/en/latest/core/engines.html#sqlalchemy.create_engine
+        .. _DB connection timeout: http://docs.sqlalchemy.org/en/latest/core/pooling.html#setting-pool-recycle
+        """
+        if url is None:
+            url = os.environ.get('DATABASE_URL', 'sqlite://')
+
+        return Database(url, schema=schema, reflect_metadata=reflect_metadata,
+                        engine_kwargs=engine_kwargs, reflect_views=reflect_views,
+                        ensure_schema=ensure_schema, row_type=row_type)
+
+- dataset ``connect`` url需要按SQLAlchemy engine URL方式定义database_url。
+- 可以定义一个环境变量 ``DATABASE_URL`` 来设置url。
+
+数据库URL的典型形式是::
+
+    dialect+driver://username:password@host:port/database
+
+- dialect方言是SQLAlchemy方言的标识名称，如sqlite, mysql, postgresql, oracle,或mssql。
+- driver是使用全小写字母连接到数据库的DBAPI的名称。
+- URL中特殊的字符需要使用URL编码。
+
+- 使用 ``dataset.connect(url)`` 来连接数据库引擎。
+
+我们使用SQLite3将数据库保存到dataset.db文件中::
+
+    >>> db = dataset.connect('sqlite:///dataset.db')
+
+    >>> db
+    <Database(sqlite:///dataset.db)>
+
+- 使用 ``get_table(table_name, primary_id=None, primary_type=None)`` 或 ``create_table(table_name, primary_id=None, primary_type=None)`` 加载表或创建表，如果表不存在则会创建表。
+- 使用 ``db[table_name]`` 也可以加载或创建表。
+
+指定数据库中的表时，可以使用类似于字典的语法，当表不存在时，会默认建表::
+
+    >>> table = db.get_table('user')
+
+    >>> table
+    <Table(user)>
+
+    >>> table1 = db['user']
+
+    >>> table1
+    <Table(user)>
+
+    >>> id(table) == id(table1)
+    True
+
+    >>> db['population']
+    <Table(population)>
+
+    >>> table2 = db['population']
+
+    >>> table2
+    <Table(population)>
+
+在SQLite3中查看user表和population表信息::
+
+    sqlite> .table                         
+    population  user                       
+    sqlite> .schema user                   
+    CREATE TABLE user (                    
+            id INTEGER NOT NULL,           
+            PRIMARY KEY (id)               
+    );                                     
+    sqlite> .schema population             
+    CREATE TABLE population (              
+            id INTEGER NOT NULL,           
+            PRIMARY KEY (id)               
+    );                                     
+    sqlite>                                
+    
+创建表时指主键和主键类型::
+
+    >>> table_population2 = db.create_table('population2', 'age')  # 指定age为主键
+
+    >>> table_population2
+    <Table(population2)>
+
+    >>> table_population3 = db.create_table('population3', primary_id='city', primary_type=db.types.text)  # 指定city为主键，主键类型为text类型
+
+    >>> table_population3
+    <Table(population3)>
+
+    >>> table_population4 = db.create_table('population4', primary_id='city', primary_type=db.types.string(25)) # 指定city为主键，主键类型为string类型(对应varchar(25))
+
+    >>> table_population4
+    <Table(population4)>
+
+再在SQLite3中查看表信息::
+
+    sqlite> .table                                                
+    population   population2  population3  population4  user      
+    sqlite> .schema population2                                   
+    CREATE TABLE population2 (                                    
+            age INTEGER NOT NULL,                                 
+            PRIMARY KEY (age)                                     
+    );                                                            
+    sqlite> .schema population3                                   
+    CREATE TABLE population3 (                                    
+            city TEXT NOT NULL,                                   
+            PRIMARY KEY (city)                                    
+    );                                                            
+    sqlite> .schema population4                                   
+    CREATE TABLE population4 (                                    
+            city VARCHAR(25) NOT NULL,                            
+            PRIMARY KEY (city)                                    
+    );                                                            
+    sqlite>                                                       
+
+- 对 ``Table`` 对象使用 ``insert(row, ensure=None, types=None)`` 插入数据，row为字典数据，返回插入行的primary key号。
+- 如果row字典中的键不在表中，则会自动创建相应的column列。
+
+插入一行数据::
+
+    >>> table.insert(dict(name='John Doe', age=46, country='China'))
+    1
+
+再在SQLite3中查看user表信息，使用 ``.headers on`` 打开表头header，并使用 ``.mode column`` 打开column列模式::
+
+    sqlite> .headers on
+    sqlite> .mode column
+    sqlite> select * from user;
+    id          name        age         country
+    ----------  ----------  ----------  ----------
+    1           John Doe    46          China
+    sqlite> .schema user
+    CREATE TABLE user (
+            id INTEGER NOT NULL, name TEXT, age INTEGER, country TEXT,
+            PRIMARY KEY (id)
+    );
+    sqlite>
+
+可以发现列 ``name`` 和 ``country`` 被自动加入到表中。
+
+再插入一行数据::
+
+    >>> table.insert(dict(name='Edmond Dantes', age=37, country='France', gender='male'))
+    2
+
+再在SQLite3中查看user表信息::
+
+    sqlite> .schema user
+    CREATE TABLE user (
+            id INTEGER NOT NULL, name TEXT, age INTEGER, country TEXT, gender TEXT,
+            PRIMARY KEY (id)
+    );
+    sqlite> select * from user;  --在默认的情况下，每列至少10个字符宽。太宽的数据将被截取。你可以用“.width”命令来调整列宽。
+    id          name        age         country     gender
+    ----------  ----------  ----------  ----------  ----------
+    1           John Doe    46          China
+    2           Edmond Dan  37          France      male
+    sqlite> .width 12 20  -- 改变第一列的宽度为12字符，改变第二列的宽度为20字符
+    sqlite> select * from user;
+    id            name                  age         country     gender
+    ------------  --------------------  ----------  ----------  ----------
+    1             John Doe              46          China
+    2             Edmond Dantes         37          France      male
+    sqlite> select * from user where name="Edmond Dantes";
+    id            name                  age         country     gender
+    ------------  --------------------  ----------  ----------  ----------
+    2             Edmond Dantes         37          France      male
+    
+可以发现新列gender被自动添加进数据库。
+
+
+- 对 ``Table`` 对象使用 ``update(row, keys, ensure=None, types=None, return_count=False)`` 更新数据，row为字典数据，返回更新行的总行数。
+- 如果row字典中的键不在表中，则会自动创建相应的column列。
+
+更新John的年龄为47岁::
+
+    >>> table.update(dict(name='John Doe', age=47), ['name'])
+    1
+
+再在SQLite3中查看user表信息::
+
+    sqlite> select * from user;                                             
+    id            name                  age         country     gender      
+    ------------  --------------------  ----------  ----------  ----------  
+    1             John Doe              47          China                   
+    2             Edmond Dantes         37          France      male        
+    sqlite>   
+
+可以发现John Doe的年龄已经从46岁变成47岁了。
+
+发现John Doe的性别没有指定，更新一下::
+
+    >>> table.update(dict(name='John Doe', gender='famale'), ['name'])
+    1
+
+再在SQLite3中查看user表信息::
+
+    sqlite> select * from user;                                              
+    id            name                  age         country     gender       
+    ------------  --------------------  ----------  ----------  ----------   
+    1             John Doe              47          China       famale       
+    2             Edmond Dantes         37          France      male         
+    sqlite>                                                                  
+    
+性别补充好了，又发现可以补充一个email邮箱的字段::
+
+    >>> table.update(dict(id=1, email='john@python.org'),['id'])
+    1
+
+    >>> table.update(dict(id=2, email='edmond@python.org'),['id'])
+    1
+
+再在SQLite3中查看user表信息::
+
+    sqlite> select * from user;
+    id            name                  age         country     gender      email
+    ------------  --------------------  ----------  ----------  ----------  ---------------
+    1             John Doe              47          China       famale      john@python.org
+    2             Edmond Dantes         37          France      male        edmond@python.o
+    sqlite>
+
+说明在update时如果列不存在的时候也可以自动加入到数据库中。
+
+不指定具体对哪一行进行更新::
+
+    >>> table.update(dict(age=30),['id'])
+    2
+
+再在SQLite3中查看user表信息::
+
+    sqlite> select * from user;                                                                         
+    id            name                  age         country     gender      email                       
+    ------------  --------------------  ----------  ----------  ----------  ---------------             
+    1             John Doe              30          China       famale      john@python.org             
+    2             Edmond Dantes         30          France      male        edmond@python.o             
+    sqlite>                                                                                             
+
+说明此时对所有的行进行更新，将age全部设置为30岁。
+
+
 
 python3-memcached处理NoSQL非关系型数据库memcached
 -----------------------------------------------------
@@ -1567,3 +1873,7 @@ redis模块处理NoSQL非关系型数据库Redis
 - `SQLAlchemy 1.3 Documentation: Engine Configuration <https://docs.sqlalchemy.org/en/13/core/engines.html#sqlalchemy.create_engine>`_
 - `SQLAlchemy 1.3 Documentation: Database Urls <https://docs.sqlalchemy.org/en/13/core/engines.html?highlight=database%20url#database-urls>`_
 - `SQLAlchemy 1.3 Documentation: Query API <https://docs.sqlalchemy.org/en/13/orm/query.html#sqlalchemy.orm.query.Query>`_
+- `dataset: databases for lazy people <https://dataset.readthedocs.io/en/latest/>`_
+- `dataset: databases for lazy people: API documentation <https://dataset.readthedocs.io/en/latest/api.html>`_
+- `dataset: databases for lazy people: Quickstart <https://dataset.readthedocs.io/en/latest/quickstart.html>`_
+- `Python的"懒人"包DataSet解析 <https://cloud.tencent.com/developer/article/1376850>`_
