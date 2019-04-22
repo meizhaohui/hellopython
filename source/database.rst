@@ -1853,7 +1853,78 @@ SQlite dialect方言示例::
 
 说明此时对所有的行进行更新，将age全部设置为30岁。
 
+- 使用Transactions事务上下文管理器。
 
+使用 ``with`` 上下文管理器::
+
+    >>> with db:
+    ...     db['user'].insert(dict(name='John Doe', age=46, country='China'))
+    ...
+
+再在SQLite3中查看user表信息::
+
+    sqlite> select * from user;
+    id          name        age         country     gender      email
+    ----------  ----------  ----------  ----------  ----------  ---------------
+    1           John Doe    32          China       famale      john@python.org
+    2           Edmond Dan  32          France      male        edmond@python.o
+    3           John Doe    46          China
+
+- 通过调用  ``begin()`` 、 ``commit()`` 、 ``rollback()``  以及使用 ``try..except`` 捕获异常。
+
+使用 ``try..except`` 捕获异常::
+
+    >>> db = dataset.connect('sqlite:///dataset.db')
+
+    >>> db.begin()
+
+    >>> try:
+    ...     db['user'].update(dict(id=3,name='John King', gender='male', email='king@python.org'), ['id'])
+    ...     db.commit()
+    ... except:
+    ...     db.rollback()
+    ...
+
+再在SQLite3中查看user表信息::
+
+    sqlite> select * from user;                                                    
+    id          name        age         country     gender      email              
+    ----------  ----------  ----------  ----------  ----------  ---------------    
+    1           John Doe    32          China       famale      john@python.org    
+    2           Edmond Dan  32          France      male        edmond@python.o    
+    3           John King   46          China       male        king@python.org    
+    sqlite>                                                                        
+
+可以看到第三行数据已经更新。
+
+- 检索数据库和表。
+- ``db.tables`` 查看数据库中所有的表信息。
+- ``db[table_name].columns`` 查看数据库表中所有字段信息。
+
+查看表信息和表字段信息::
+
+    >>> db.tables
+    ['population', 'population2', 'population3', 'population4', 'user']
+
+    >>> db['user'].columns
+    ['id', 'name', 'age', 'country', 'gender', 'email']
+
+    >>> db['population'].columns
+    ['id']
+
+
+
+
+
+
+
+
+
+    
+    
+    
+    
+    
 
 python3-memcached处理NoSQL非关系型数据库memcached
 -----------------------------------------------------
