@@ -1900,6 +1900,7 @@ SQlite dialect方言示例::
 - 检索数据库和表。
 - ``db.tables`` 查看数据库中所有的表信息。
 - ``db[table_name].columns`` 查看数据库表中所有字段信息。
+- ``len(db[table_name])`` 统计表中的数据行数。
 
 查看表信息和表字段信息::
 
@@ -1912,19 +1913,273 @@ SQlite dialect方言示例::
     >>> db['population'].columns
     ['id']
 
+    >>> len(db['user'])
+    3
 
+    >>> len(db['population'])
+    0
 
+- ``Table.all()`` 获取所有数据。
+-  如果我们只想迭代表中的所有行，我们可以省略 ``all()`` 。
 
+获取表中的所有数据::
 
+    >>> table
+    <Table(user)>
 
+    >>> table.all()
+    <dataset.util.ResultIter at 0x251a25e9d30>
 
+    >>> users = table.all()
 
+    >>> users
+    <dataset.util.ResultIter at 0x251a2643c88>
 
+    >>> for user in users:
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 2), ('name', 'Edmond Dantes'), ('age', 32), ('country', 'France'), ('gender', 'male'), ('email', 'edmond@python.org')])
+    OrderedDict([('id', 3), ('name', 'John King'), ('age', 46), ('country', 'China'), ('gender', 'male'), ('email', 'king@python.org')])
+
+    >>> for user in table:
+    ...     print(user['name'], user['age'], user['country'])
+    ...
+    John Doe 32 China
+    Edmond Dantes 32 France
+    John King 46 China
+
+- ``Table.find()`` 查找所有特定条件的数据。
+- ``Table.find_one()`` 查找所有特定条件的数据，但仅返回一条数据。
+- 使用 ``_limit`` 关键字参数可以限定返回的数据个数。
+- 使用 ``order_by`` 关键字参数可以对查找的结果进行排序。
+
+通过 ``find`` 或 ``find_one`` 获取数据::
+
+    >>> chinese_users = table.find(country='China')
+
+    >>> chinese_users
+    <dataset.util.ResultIter at 0x251a2bd97b8>
+
+    >>> for user in chinese_users:
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 3), ('name', 'John King'), ('age', 46), ('country', 'China'), ('gender', 'male'), ('email', 'king@python.org')])
     
+    >>> table.find_one(country='China')
+    OrderedDict([('id', 1),
+                 ('name', 'John Doe'),
+                 ('age', 32),
+                 ('country', 'China'),
+                 ('gender', 'famale'),
+                 ('email', 'john@python.org')])
+
+    >>> for user in table.find(country='China', _limit=1):  # 限定输出1条结果
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+
+    >>> for user in table.find(country='China', _limit=2):  # 限定输出2条结果
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 3), ('name', 'John King'), ('age', 46), ('country', 'China'), ('gender', 'male'), ('email', 'king@python.org')])
+
+    >>> for user in table.find(country='China', order_by='age'):  # 按age年龄进行升序排列
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 3), ('name', 'John King'), ('age', 46), ('country', 'China'), ('gender', 'male'), ('email', 'king@python.org')])
+
+    >>> for user in table.find(country='China', order_by='-age'):  # 按age年龄进行降序排列
+    ...     print(user)
+    ...
+    OrderedDict([('id', 3), ('name', 'John King'), ('age', 46), ('country', 'China'), ('gender', 'male'), ('email', 'king@python.org')])
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
     
+    >>> for user in table.find(country='France', age=32):
+    ...     print(user)
+    ...
+    OrderedDict([('id', 2), ('name', 'Edmond Dantes'), ('age', 32), ('country', 'France'), ('gender', 'male'), ('email', 'edmond@python.org')])
     
+    >>> table.find(id=[1, 3])
+    <dataset.util.ResultIter at 0x251a2bf82b0>
+
+    >>> for user in table.find(id=[1, 3]):
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 3), ('name', 'John King'), ('age', 46), ('country', 'China'), ('gender', 'male'), ('email', 'king@python.org')])
+
+
+- 在 ``find`` 或 ``find_one`` 中使用比较运算符(comparison operators)。
+
+可使用的运算符包括::
+
+    gt, >
+    lt, <
+    gte, >=
+    lte, <=
+    !=, <>, not
+    between, ..
+
+使用比较运算符::
+
+    >>> for user in table.find(age={'>=': 40}):
+    ...     print(user)
+    ...
+    OrderedDict([('id', 3), ('name', 'John King'), ('age', 46), ('country', 'China'), ('gender', 'male'), ('email', 'king@python.org')])
+
+    >>> for user in table.find(age={'gt': 40}):
+    ...     print(user)
+    ...
+    OrderedDict([('id', 3), ('name', 'John King'), ('age', 46), ('country', 'China'), ('gender', 'male'), ('email', 'king@python.org')])
+
+    >>> for user in table.find(age={'lt': 40}):
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 2), ('name', 'Edmond Dantes'), ('age', 32), ('country', 'France'), ('gender', 'male'), ('email', 'edmond@python.org')])
+
+    >>> for user in table.find(age={'<': 40}):
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 2), ('name', 'Edmond Dantes'), ('age', 32), ('country', 'France'), ('gender', 'male'), ('email', 'edmond@python.org')])
+
+    >>> for user in table.find(age={'between':[30,40]}):
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 2), ('name', 'Edmond Dantes'), ('age', 32), ('country', 'France'), ('gender', 'male'), ('email', 'edmond@python.org')])
+
+    >>> for user in table.find(age={'..':[30,40]}):
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 2), ('name', 'Edmond Dantes'), ('age', 32), ('country', 'France'), ('gender', 'male'), ('email', 'edmond@python.org')])
+
+- ``Table.distinct()`` 获取一列或多列的唯一行。
+
+如获取所有的国家信息::
     
+    >>> table.distinct('country')
+    <dataset.util.ResultIter at 0x251a2df57f0>
+
+    >>> for country in table.distinct('country'):
+    ...     print(country)
+    ...
+    OrderedDict([('country', 'China')])
+    OrderedDict([('country', 'France')])
     
+    >>> for age in table.distinct('age'):
+    ...     print(age)
+    ...
+    OrderedDict([('age', 32)])
+    OrderedDict([('age', 46)])
+
+    >>> for age_country in table.distinct('age','country'):
+    ...     print(age_country)
+    ...
+    OrderedDict([('age', 32), ('country', 'China')])
+    OrderedDict([('age', 32), ('country', 'France')])
+    OrderedDict([('age', 46), ('country', 'China')])
+
+    >>> for age in table.distinct('age',country='China'):
+    ...     print(age)
+    ...
+    OrderedDict([('age', 32)])
+    OrderedDict([('age', 46)])
+    
+
+- 使用 ``db.query(SQL_STRING)`` 运行自定义SQL字符串SQL_STRING。
+
+统计每个国家的用户数量::
+
+    >>> result = db.query('SELECT country, COUNT(*) c FROM user GROUP BY country')
+    ... for row in result:
+    ...    print(row['country'], row['c'])
+    ...
+    China 2
+    France 1
+
+    >>> result = db.query('SELECT country, COUNT(*) AS count FROM user GROUP BY country')
+    ... for row in result:
+    ...    print(row['country'], row['count'])
+    ...
+    China 2
+    France 1
+    
+- ``Table.delete(*clauses, **filters)`` 从表中删除行数据。
+- If no arguments are given, all records are deleted. 即 ``如果没指定参数，所有的行数据都会会删除`` ！！！
+
+在表中删除行数据::
+
+    >>> user_king = table.find_one(name='John King')
+
+    >>> user_king
+    OrderedDict([('id', 3),
+                 ('name', 'John King'),
+                 ('age', 46),
+                 ('country', 'China'),
+                 ('gender', 'male'),
+                 ('email', 'king@python.org')])
+             
+    >>> table.delete(name='John King')
+    True
+    
+    >>> for user in table.all():
+    ...     print(user)
+    ...
+    OrderedDict([('id', 1), ('name', 'John Doe'), ('age', 32), ('country', 'China'), ('gender', 'famale'), ('email', 'john@python.org')])
+    OrderedDict([('id', 2), ('name', 'Edmond Dantes'), ('age', 32), ('country', 'France'), ('gender', 'male'), ('email', 'edmond@python.org')])
+
+
+再在SQLite3中查看user表信息::
+
+    sqlite> select * from user;
+    id          name        age         country     gender      email
+    ----------  ----------  ----------  ----------  ----------  ---------------
+    1           John Doe    32          China       famale      john@python.org
+    2           Edmond Dan  32          France      male        edmond@python.o
+    sqlite>
+
+不设置参数，使用delete删除::
+
+    >>> table.delete()
+    True
+
+    >>> for user in table.all():
+    ...     print(user)
+    ...
+
+再在SQLite3中查看user表信息::
+
+    sqlite> select * from user;
+    sqlite>
+
+已经查询不到数据，说明user表已经被清空了。
+
+- ``Table.drop_column(name)`` 从表中删除指定列。
+- SQLite不支持删除列。
+
+尝试删除列::
+
+    >>> table.columns
+    ['id', 'name', 'age', 'country', 'gender', 'email']
+
+        >>> table.drop_column('email')
+        ---------------------------------------------------------------------------
+        RuntimeError                              Traceback (most recent call last)
+        <ipython-input-79-1932daeb597f> in <module>
+        ----> 1 table.drop_column('email')
+
+        RuntimeError: SQLite does not support dropping columns.
+
+提示 ``RuntimeError`` 异常。
+
+
 
 python3-memcached处理NoSQL非关系型数据库memcached
 -----------------------------------------------------
