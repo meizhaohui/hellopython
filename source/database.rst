@@ -2179,8 +2179,152 @@ SQlite dialect方言示例::
 
 提示 ``RuntimeError`` 异常。
 
+memcached的使用
+-----------------------------------------------------
+
+- Memcached是一个自由开源的，高性能，分布式内存对象缓存系统。
+- Memcached是一种基于内存的key-value存储，用来存储小块的任意数据（字符串、对象）。这些数据可以是数据库调用、API调用或者是页面渲染的结果。 
+
+linux下安装Memcached 参见https://www.runoob.com/memcached/window-install-memcached.html 。
+
+安装依赖包::
+
+    [root@localhost ~]# yum install libevent libevent-devel -y
+    
+安装Memcached::
+
+    [root@localhost ~]# yum install memcached -y
+
+查看memcached的帮助信息::
+
+    [root@localhost ~]# memcached -h
+    memcached 1.4.15
+    -p <num>      TCP port number to listen on (default: 11211)
+    -U <num>      UDP port number to listen on (default: 11211, 0 is off)
+    -s <file>     UNIX socket path to listen on (disables network support)
+    -a <mask>     access mask for UNIX socket, in octal (default: 0700)
+    -l <addr>     interface to listen on (default: INADDR_ANY, all addresses)
+                  <addr> may be specified as host:port. If you don't specify
+                  a port number, the value you specified with -p or -U is
+                  used. You may specify multiple addresses separated by comma
+                  or by using -l multiple times
+    -d            run as a daemon
+    -r            maximize core file limit
+    -u <username> assume identity of <username> (only when run as root)
+    -m <num>      max memory to use for items in megabytes (default: 64 MB)
+    -M            return error on memory exhausted (rather than removing items)
+    -c <num>      max simultaneous connections (default: 1024)
+    -k            lock down all paged memory.  Note that there is a
+                  limit on how much memory you may lock.  Trying to
+                  allocate more than that would fail, so be sure you
+                  set the limit correctly for the user you started
+                  the daemon with (not for -u <username> user;
+                  under sh this is done with 'ulimit -S -l NUM_KB').
+    -v            verbose (print errors/warnings while in event loop)
+    -vv           very verbose (also print client commands/reponses)
+    -vvv          extremely verbose (also print internal state transitions)
+    -h            print this help and exit
+    -i            print memcached and libevent license
+    -P <file>     save PID in <file>, only used with -d option
+    -f <factor>   chunk size growth factor (default: 1.25)
+    -n <bytes>    minimum space allocated for key+value+flags (default: 48)
+    -L            Try to use large memory pages (if available). Increasing
+                  the memory page size could reduce the number of TLB misses
+                  and improve the performance. In order to get large pages
+                  from the OS, memcached will allocate the total item-cache
+                  in one large chunk.
+    -D <char>     Use <char> as the delimiter between key prefixes and IDs.
+                  This is used for per-prefix stats reporting. The default is
+                  ":" (colon). If this option is specified, stats collection
+                  is turned on automatically; if not, then it may be turned on
+                  by sending the "stats detail on" command to the server.
+    -t <num>      number of threads to use (default: 4)
+    -R            Maximum number of requests per event, limits the number of
+                  requests process for a given connection to prevent 
+                  starvation (default: 20)
+    -C            Disable use of CAS
+    -b <num>      Set the backlog queue limit (default: 1024)
+    -B            Binding protocol - one of ascii, binary, or auto (default)
+    -I            Override the size of each slab page. Adjusts max item size
+                  (default: 1mb, min: 1k, max: 128m)
+    -S            Turn on Sasl authentication
+    -o            Comma separated list of extended or experimental options
+                  - (EXPERIMENTAL) maxconns_fast: immediately close new
+                    connections if over maxconns limit
+                  - hashpower: An integer multiplier for how large the hash
+                    table should be. Can be grown at runtime if not big enough.
+                    Set this based on "STAT hash_power_level" before a 
+                    restart.
+    [root@localhost ~]#                                                      
+
+启动memecached::
+
+    [root@localhost ~]# memcached -u root -p 11211 -m 64m -d
+
+    启动选项说明:
+    -u root 以root用户运行Memcache(如果不使用此选项，则会提示can't run as root without the -u switch)
+    -p 11211 是设置Memcache监听的端口为11211
+    -m 64m 是分配给Memcache使用的内存数量，单位是64MB
+    -d 是启动一个守护进程
+
+安装telnet工具::
+
+    [root@localhost ~]# yum install telnet-server telnet -y
 
 
+使用 ``telnet HOST PORT`` 连接memcached服务，HOST、PORT是运行memcached的主机和端口。
+
+连接memcached服务::
+
+    [root@localhost ~]# telnet 127.0.0.1 11211
+    Trying 127.0.0.1...
+    Connected to 127.0.0.1.
+    Escape character is '^]'.
+    
+说明已经连接上memcached服务。
+
+或者HOST使用localhost也可以::
+
+    [root@localhost ~]# telnet localhost 11211
+    Trying ::1...
+    Connected to localhost.
+    Escape character is '^]'.
+    
+memcached的存储命名
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- set命令
+
+语法如下::
+
+    set key flags exptime bytes [noreply] 
+    value 
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
+    flags: 可以包括键值对的整型参数，客户机使用它存储关于键值对的额外信息。
+    exptime: 在缓存中保存键值对的时间长度(以秒为单位，0 表示永远)。
+    bytes: 在缓存中存储的字节数。
+    noreply: 可选参数，该参数告诉服务器不需要返回数据。
+    value: 键值 key-value 结构中的 value，存储的值，始终位于第二行。
+
+设置一个键值对::
+    
+    set runoob 0 900 9
+    memcached
+    STORED
+    get runoob
+    VALUE runoob 0 9
+    memcached
+    END
+    
+    其中：
+    key键为runoob
+    flags为0
+    exptime过期时间900s
+    bytes存储字节数9
+    value存储的值为memcached
+    
 python3-memcached处理NoSQL非关系型数据库memcached
 -----------------------------------------------------
 
