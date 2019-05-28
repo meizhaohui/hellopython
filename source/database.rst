@@ -2290,10 +2290,12 @@ linux下安装Memcached 参见https://www.runoob.com/memcached/window-install-me
     Connected to localhost.
     Escape character is '^]'.
     
-memcached的存储命名
+在连接上memcached服务后，就可以执行memcached命令了。
+    
+memcached的存储命令
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- set命令
+- ``set`` 命令，用于将value值存储到key键中，如果key已经存在，则会更新key的value值。
 
 语法如下::
 
@@ -2310,21 +2312,146 @@ memcached的存储命名
 
 设置一个键值对::
     
-    set runoob 0 900 9
-    memcached
+    set firstkey 0 900 15
+    hello,memcached
     STORED
-    get runoob
-    VALUE runoob 0 9
-    memcached
+    get firstkey
+    VALUE firstkey 0 15
+    hello,memcached
+    END
+    set firstkey 0 900 16      <-- 说明：此处是对firstkey键的value值进行更新
+    hello,memcached!
+    STORED
+    get firstkey
+    VALUE firstkey 0 16
+    hello,memcached!
     END
     
     其中：
-    key键为runoob
+    key键为firstkey
     flags为0
     exptime过期时间900s
-    bytes存储字节数9
-    value存储的值为memcached
+    bytes存储字节数15
+    value存储的值为hello,memcached
+
+设置过期时间::
+
+    set secondkey 0 30 6            <-- 说明：设置过期时间为30秒
+    hello!
+    STORED
+    get secondkey                   <-- 说明：在30s内能够获取到secondkey的值
+    VALUE secondkey 0 6
+    hello!
+    END
+    get secondkey                   <-- 说明：在30s内能够获取到secondkey的值
+    VALUE secondkey 0 6
+    hello!
+    END
+    get secondkey                   <-- 说明：在30s内能够获取到secondkey的值
+    VALUE secondkey 0 6
+    hello!
+    END
+    get secondkey                   <-- 说明：在30s内能够获取到secondkey的值
+    VALUE secondkey 0 6
+    hello!
+    END
+    get secondkey                   <-- 说明：超过30s后，获取不到secondkey的值，说明secondkey已经过期
+    END
+
+设置无返回数据::
+
+    set noreplykey 0 900 6 noreply
+    123456            <-- 说明：设置成功后，并没有返回STORED
+    get noreplykey
+    VALUE noreplykey 0 6
+    123456
+    END
     
+- 存储正确时，输出信息为 ``STORED`` ，表示已经存储成功。
+- 存储失败时，输出信息为 ``ERROR`` ，表示存储失败。
+
+键值设置错误时的输出::
+
+    set test 0 900 6
+    1234567890            <-- 说明：此处输入的值是10byte，而缓存存储只指定存储字节数是6byte，超过允许的范围
+    CLIENT_ERROR bad data chunk
+    ERROR
+    set test 0 900 6
+    1234
+    56                    <-- 说明：此处指定存储字节数是6byte，但存储值分两行写，也导致存储错误
+    CLIENT_ERROR bad data chunk
+    ERROR
+
+- ``add`` 命令，将value存储在指定的key键中。
+- 如果key存在，且未过期，则不会更新数据，并返回响应 ``NOT_STORED``。
+- 如果key存在，且已经过期，则会更新数据。
+- 如果key不存在，则会添加数据，作用同 ``set`` 。
+
+语法如下::
+
+    add key flags exptime bytes [noreply] 
+    value 
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
+    flags: 可以包括键值对的整型参数，客户机使用它存储关于键值对的额外信息。
+    exptime: 在缓存中保存键值对的时间长度(以秒为单位，0 表示永远)。
+    bytes: 在缓存中存储的字节数。
+    noreply: 可选参数，该参数告诉服务器不需要返回数据。
+    value: 键值 key-value 结构中的 value，存储的值，始终位于第二行。
+
+设置一个键值对::
+    
+    get firstkey                  <-- 说明：能够获取到firstkey的值
+    VALUE firstkey 0 16
+    hello,memcached!
+    END
+    get seondkey                  <-- 说明：不能够获取到secondkey的值，因为secondkey键已经过期
+    END
+    add firstkey 0 900 5          <-- 说明：尝试对firstkey键进行更新，未能成功
+    hello
+    NOT_STORED                    <-- 说明：返回NOT_STORED
+    add secondkey 0 900 5         <-- 说明：尝试对secondkey键进行更新，成功
+    hello
+    STORED                        <-- 说明：返回STORED
+    add thirdkey 0 900 5          <-- 说明：尝试对thirdkey键进行更新，成功，因为thirdkey键不存在，所以相当于设置键值对
+    hello
+    STORED                        <-- 说明：返回STORED
+    get firstkey                  <-- 说明：获取到firstkey的值，但值未更新
+    VALUE firstkey 0 16
+    hello,memcached!
+    END
+    get secondkey                  <-- 说明：获取到secondkey的值，但值已经更新
+    VALUE secondkey 0 5
+    hello
+    END
+    get thirdkey                  <-- 说明：获取到thirdkey的值，但值已经更新
+    VALUE thirdkey 0 5
+    hello
+    END
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 python3-memcached处理NoSQL非关系型数据库memcached
 -----------------------------------------------------
 
