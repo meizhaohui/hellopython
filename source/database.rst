@@ -2818,8 +2818,8 @@ node2 192.168.56.13
     hello
     NOT_FOUND
 
-memcached的查找命令 ``get``  ``gets`` ``delete``  ``incr``  ``decr`` 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+memcached的查找命令 ``get``  ``gets`` ``delete``  ``incr``  ``decr``  ``flush_all``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - ``get`` 命令，获取存储到key键中的value值，如果key不存在，则返回空。
 
@@ -2983,6 +2983,45 @@ memcached的查找命令 ``get``  ``gets`` ``delete``  ``incr``  ``decr``
     ERROR
     incr num
     ERROR
+    
+- ``flush_all`` 命令，清除缓存中所有的key-value键值对。
+
+语法如下::
+
+    flush_all [time] [noreply]
+    
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
+    time： 用于在制定的时间后执行清理缓存操作。
+    noreply: 提示服务器端不需要返回数据。
+
+清除所有键值对::
+
+    [root@server ~]# telnet localhost 11211
+    Trying ::1...
+    Connected to localhost.
+    Escape character is '^]'.
+    stats sizes
+    END
+    stats items
+    END
+    set firstkey 0 3600 5   <-- 说明: 设置firstkey键的值为"hello"
+    hello
+    STORED
+    set secondkey 0 3600 6   <-- 说明: 设置secondkey键的值为"hello!"
+    hello!
+    STORED
+    gets firstkey secondkey    <-- 说明: 获取firstkey键和secondkey键的信息
+    VALUE firstkey 0 5 1
+    hello
+    VALUE secondkey 0 6 2
+    hello!
+    END
+    flush_all   <-- 说明: 清除缓存中所有的键值对，清除成功，返回"OK"
+    OK
+    gets firstkey secondkey    <-- 说明: 获取firstkey键和secondkey键的信息，已经没有相关信息
+    END
 
 memcached的统计命令 ``stats``  ``stats items`` ``stats slabs``  ``stats sizes``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -3108,9 +3147,69 @@ memcached的统计命令 ``stats``  ``stats items`` ``stats slabs``  ``stats siz
 
 
 
-python3-memcached处理NoSQL非关系型数据库memcached
+python-memcached处理NoSQL非关系型数据库memcached
 -----------------------------------------------------
 
+安装python-memcached包::
+
+    [root@server ~]# pip install python-memcached
+    Looking in indexes: https://mirrors.aliyun.com/pypi/simple/
+    Collecting python-memcached
+      Downloading https://mirrors.aliyun.com/pypi/packages/f5/90/19d3908048f70c120ec66a39e61b92c253e834e6e895cd104ce5e46cbe53/python_memcached-1.59-py2.py3-none-any.whl
+    Requirement already satisfied: six>=1.4.0 in /usr/lib/python3.6/site-packages (from python-memcached) (1.12.0)
+    Installing collected packages: python-memcached
+    Successfully installed python-memcached-1.59
+
+启动ipython，导入memcache模块，并查看相关帮助信息::
+
+    >>> memcache? 
+    Type:        module
+    String form: <module 'memcache' from '/usr/lib/python3.6/site-packages/memcache.py'>
+    File:        /usr/lib/python3.6/site-packages/memcache.py
+    Docstring:  
+    client module for memcached (memory cache daemon)
+    
+    Overview
+    ========
+    
+    See U{the MemCached homepage<http://www.danga.com/memcached>} for more
+    about memcached.
+    
+    Usage summary
+    =============
+    
+    This should give you a feel for how this module operates::
+    
+        import memcache
+        mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+        
+        mc.set("some_key", "Some value")
+        value = mc.get("some_key")
+        
+        mc.set("another_key", 3)
+        mc.delete("another_key")
+        
+        mc.set("key", "1") # note that the key used for incr/decr must be
+                           # a string.
+        mc.incr("key")
+        mc.decr("key")
+        
+    The standard way to use memcache with a database is like this:
+    
+        key = derive_key(obj)
+        obj = mc.get(key)
+        if not obj:
+            obj = backend_api.get(...)
+            mc.set(key, obj)
+    
+        # we now have obj, and future passes through this code
+        # will use the object from the cache.
+    
+    Detailed Documentation
+    ======================
+
+    More detailed documentation is available in the L{Client} class.
+    
 
 
 redis模块处理NoSQL非关系型数据库Redis
