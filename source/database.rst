@@ -2292,8 +2292,8 @@ linux下安装Memcached 参见https://www.runoob.com/memcached/window-install-me
     
 在连接上memcached服务后，就可以执行memcached命令了。
     
-memcached的存储命令
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+memcached的存储命令 ``set``  ``add`` ``replace``  ``append``  ``prepend``  ``cas``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - ``set`` 命令，用于将value值存储到key键中，如果key已经存在，则会更新key的value值。
 
@@ -2383,7 +2383,7 @@ memcached的存储命令
     ERROR
 
 - ``add`` 命令，将value存储在指定的key键中。
-- 如果key存在，且未过期，则不会更新数据，并返回响应 ``NOT_STORED``。
+- 如果key存在，且未过期，则不会更新数据，并返回响应 ``NOT_STORED`` 。
 - 如果key存在，且已经过期，则会更新数据。
 - 如果key不存在，则会添加数据，作用同 ``set`` 。
 
@@ -2430,25 +2430,681 @@ memcached的存储命令
     hello
     END
 
+- ``replace`` 命令，将已经存在的key键的的值为value。
+- 如果key存在，且未过期，则替换数据，并返回响应 ``STORED`` 。
+- 如果key存在，且已经过期，则替换失败， 并返回响应 ``NOT_STORED`` 。
+- 如果key不存在，则替换失败，并返回响应 ``NOT_STORED`` 。
+
+语法如下::
+
+    replace key flags exptime bytes [noreply] 
+    value 
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
+    flags: 可以包括键值对的整型参数，客户机使用它存储关于键值对的额外信息。
+    exptime: 在缓存中保存键值对的时间长度(以秒为单位，0 表示永远)。
+    bytes: 在缓存中存储的字节数。
+    noreply: 可选参数，该参数告诉服务器不需要返回数据。
+    value: 键值 key-value 结构中的 value，存储的值，始终位于第二行。
+
+对键的值进行替换::
+
+    get firstkey
+    VALUE firstkey 0 16
+    hello,memcached!
+    END
+    get secondkey
+    VALUE secondkey 0 5
+    hello
+    END
+    get thirdkey
+    VALUE thirdkey 0 5
+    hello
+    END
+    set fourthkey 0 30 5
+    hello
+    STORED
+    get fourthkey
+    VALUE fourthkey 0 5
+    hello
+    END
+    get fourthkey
+    VALUE fourthkey 0 5
+    hello
+    END
+    get fourthkey
+    VALUE fourthkey 0 5
+    hello
+    END
+    get fourthkey                  <-- 说明：获取不到fourthkey的值，说明其已经过期
+    END
+    replace secondkey 0 900 6      <-- 说明：替换secondkey的值，替换成功返回"STORED"
+    hello!
+    STORED
+    get secondkey                  <-- 说明：获取secondkey的值，已经从"hello"变成了"hello!"
+    VALUE secondkey 0 6
+    hello!
+    END
+    replace thirdkey 0 900 3       <-- 说明：替换thirdkey的值，替换成功返回"STORED"
+    hi!
+    STORED
+    get thirdkey                   <-- 说明：获取thirdkey的值，已经从"hello"变成了"hi!"
+    VALUE thirdkey 0 3
+    hi!
+    END
+    replace fourthkey 0 900 16     <-- 说明：替换fourthkey的值，因为fourthkey已经过期，替换失败返回"NOT_STORED"
+    hello,memcached!
+    NOT_STORED
+    replace notexist 0 900 5       <-- 说明：替换notexist的值，因为notexist这个键不存在，不进行替换
+    hello
+    NOT_STORED
+
+- ``append`` 命令，在已经存在的key键的的值为value后面追加数据。
+- 如果key存在，且未过期，则追加数据，并返回响应 ``STORED`` 。
+- 如果key存在，且已经过期，则追加失败， 并返回响应 ``NOT_STORED`` 。
+- 如果key不存在，则追加失败，并返回响应 ``NOT_STORED`` 。
+
+语法如下::
+
+    append key flags exptime bytes [noreply] 
+    value 
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
+    flags: 可以包括键值对的整型参数，客户机使用它存储关于键值对的额外信息。
+    exptime: 在缓存中保存键值对的时间长度(以秒为单位，0 表示永远)。
+    bytes: 在缓存中存储的字节数，即追加多少字节数。
+    noreply: 可选参数，该参数告诉服务器不需要返回数据。
+    value: 键值 key-value 结构中的 value，存储的值，始终位于第二行。
+
+在键的值的后面进行追加数据::
+
+    get firstkey
+    END
+    get secondkey
+    END
+    get thirdkey
+    END
+    get fourthkey
+    END
+    set firstkey 0 12 5        <-- 说明：设置firstkey的值，12秒后过期
+    first
+    STORED
+    set secondkey 0 900 6
+    second
+    STORED
+    get firstkey               <-- 说明：获取firstkey的值，因为已经过期，获取不到数据
+    END
+    append firstkey 0 12 1     <-- 说明：向firstkey的值后面追加1个字节的数据，追加失败，返回"NOT_STORED"
+    !
+    NOT_STORED
+    append secondkey 0 900 4   <-- 说明：向secondkey的值后面追加4个字节的数据，追加成功，返回"STORED" 
+    line
+    STORED
+    get secondkey              <-- 说明：获取secondkey的值，已经是追加后的数据"secondline"了
+    VALUE secondkey 0 10
+    secondline
+    END
+    append thirdkey 0 900 5    <-- 说明: 向不存在的thirdkey中追加数据，追加失败，返回"NOT_STORED"
+    hello
+    NOT_STORED
+    get thirdkey
+    END
+
+- ``prepend`` 命令，在已经存在的key键的的值为value前面追加数据。
+- 如果key存在，且未过期，则追加数据，并返回响应 ``STORED`` 。
+- 如果key存在，且已经过期，则追加失败， 并返回响应 ``NOT_STORED`` 。
+- 如果key不存在，则追加失败，并返回响应 ``NOT_STORED`` 。
+
+语法如下::
+
+    prepend key flags exptime bytes [noreply] 
+    value 
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
+    flags: 可以包括键值对的整型参数，客户机使用它存储关于键值对的额外信息。
+    exptime: 在缓存中保存键值对的时间长度(以秒为单位，0 表示永远)。
+    bytes: 在缓存中存储的字节数，即追加多少字节数。
+    noreply: 可选参数，该参数告诉服务器不需要返回数据。
+    value: 键值 key-value 结构中的 value，存储的值，始终位于第二行。
+
+在键的值的前面进行追加数据::
+
+    set firstkey 0 12 5
+    first
+    STORED
+    get firstkey
+    VALUE firstkey 0 5 
+    first
+    END
+    get firstkey                 <-- 说明：键firstkey过期
+    END
+    set secondkey 0 900 5
+    hello
+    STORED
+    prepend firstkey 0 900 5     <-- 说明：向过期的键firstkey的值前面追加5个字节的数据，追加失败，返回"NOT_STORED"
+    befor 
+    NOT_STORED
+    prepend secondkey 0 900 6    <-- 说明：向secondkey的值前面追加6个字节的数据，追加成功，返回"STORED" 
+    before
+    STORED
+    prepend thirdkey 0 900 6     <-- 说明: 向不存在的thirdkey中追加数据，追加失败，返回"NOT_STORED"
+    before
+    NOT_STORED
+
+- Memcached于1.2.4版本新增CAS(Check and Set)协议，处理同一item被多个线程更改过程的并发问题。
+- 在Memcached中，每个key关联有一个64-bit长度的long型惟一数值，表示该key对应value的版本号。这个数值由Memcached server产生，从1开始，且同一Memcached server不会重复。在两种情况下这个版本数值会加1：1、新增一个key-value对；2、对某已有key对应的value值更新成功。删除item版本值不会减小。 
+- ``cas`` 命令，用于将value值存储到key键中，如果key已经存在，且未被其他用户更新，则会更新key的value值，并返回"STORED"。
+- ``cas`` 命令，用于将value值存储到key键中，如果key已经存在，且被其他用户更新，则不会更新key的value值，并返回"EXISTS"。
+- ``cas`` 命令，用于将value值存储到key键中，如果key不存在，则不会更新key的value值，并返回"NOT_FOUND"。
+- ``cas`` 命令，用于将value值存储到key键中，如果cas命令的语法错误，则返回"ERROR"。
+
+语法如下::
+
+    cas key flags exptime bytes unique_cas_token [noreply] 
+    value
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
+    flags: 可以包括键值对的整型参数，客户机使用它存储关于键值对的额外信息。
+    exptime: 在缓存中保存键值对的时间长度(以秒为单位，0 表示永远)。
+    bytes: 在缓存中存储的字节数。
+    unique_cas_token：通过gets命令获取到的一个唯一的64位的CAS值。
+    noreply: 可选参数，该参数告诉服务器不需要返回数据。
+    value: 键值 key-value 结构中的 value，存储的值，始终位于第二行。
+    
+我使用以下三台服务器演示并发操作：
+
+server 192.168.56.11
+
+node1 192.168.56.12
+
+node2 192.168.56.13
+
+首先在server端防火墙放行11211端口::
+
+    [root@server ~]# firewall-cmd --list-all
+    public (active)
+      target: default
+      icmp-block-inversion: no
+      interfaces: enp0s3 enp0s8
+      sources: 
+      services: ssh dhcpv6-client
+      ports: 8140/tcp 53/tcp
+      protocols: 
+      masquerade: no
+      forward-ports: 
+      source-ports: 
+      icmp-blocks: 
+      rich rules: 
+    
+    [root@server ~]# firewall-cmd --permanent --add-port=11211/tcp
+    success
+    [root@server ~]# firewall-cmd --reload
+    success
+    [root@server ~]# firewall-cmd --list-all
+    public (active)
+      target: default
+      icmp-block-inversion: no
+      interfaces: enp0s3 enp0s8
+      sources: 
+      services: ssh dhcpv6-client
+      ports: 8140/tcp 53/tcp 11211/tcp
+      protocols: 
+      masquerade: no
+      forward-ports: 
+      source-ports: 
+      icmp-blocks: 
+      rich rules: 
+      
+在server端使用telnet连接memcached服务器，并设置一个firstkey键，值为"hello,memcached"::
+
+    [root@server ~]# telnet localhost 11211
+    Trying ::1...
+    Connected to localhost.
+    Escape character is '^]'.
+    set firstkey 0 900 15   
+    hello,memcached
+    STORED
+    get firstkey
+    VALUE firstkey 0 15
+    hello,memcached
+    END
+
+在node1节点使用telnet连接memcached服务器，并获取firstkey键值::
+
+    [root@node1 ~]# telnet 192.168.56.11 11211
+    Trying 192.168.56.11...
+    Connected to 192.168.56.11.
+    Escape character is '^]'.
+    get firstkey
+    VALUE firstkey 0 15
+    hello,memcached
+    END
+
+在node2节点使用telnet连接memcached服务器，并获取firstkey键值::
+
+    [root@node2 ~]# telnet 192.168.56.11 11211
+    Trying 192.168.56.11...
+    Connected to 192.168.56.11.
+    Escape character is '^]'.
+    get firstkey
+    VALUE firstkey 0 15
+    hello,memcached
+    END
+
+可以发现在node1节点和node2节点上面都能够正常的获取firstkey键的值。
+
+如果我们要在node1节点给firstkey追加一个字符"!"，期望追加后的firstkey变成"hello,memcached!"。要在node2节点上给firstkey追加12个字符"How are you?",期望追加后的firstkey变成"hello,memcachedHow are you?"。
+
+先在node1节点上面追加::
+
+    append firstkey 0 900 1
+    !
+    STORED
+    get firstkey
+    VALUE firstkey 0 16
+    hello,memcached!
+    END
+
+再在node2节点上面追加::
+
+    append firstkey 0 900 12
+    How are you?
+    STORED
+    get firstkey
+    VALUE firstkey 0 28
+    hello,memcached!How are you?
+    END
+
+对比发现在node2上面获取的firstkey的值是"hello,memcached!How are you?",并不是"hello,memcachedHow are you?"，原因是node2在更新firstkey前，node1已经将firstkey键进行了更新，并增加了一个字符"!"，而node2并不知道这件事，导致node2获取的数据并不是自己预期的那样!!!
+
+**可以发现，这样并不能保证多个节点上修改firstkey的初始值是同一个值，也不能保证firstkey不会多个节点修改**。
+
+- Memcached自1.2.4版本新增CAS协议用于解决并发修改问题，即给每个KEY关键一个CAS值，表示该KEY对应的value的版本号。
+- 使用 ``gets key`` 可以查询key的CAS值。
+
+在server端使用telnet连接memcached服务器，并设置一个firstkey键，值为"Hello"，设置secondkey键，值为"hi"::
+
+    [root@server ~]# telnet localhost 11211
+    Trying ::1...
+    Connected to localhost.
+    Escape character is '^]'.
+    set firstkey 0 3600 5
+    Hello
+    STORED
+    gets firstkey
+    VALUE firstkey 0 5 22
+    Hello
+    END
+    set secondkey 0 3600 2
+    hi
+    STORED
+    gets secondkey
+    VALUE secondkey 0 2 23
+    hi
+    END
+
+在node1节点使用telnet连接memcached服务器，并获取firstkey键和secondkey键的cas值::
+
+    [root@node1 ~]# telnet 192.168.56.11 11211
+    Trying 192.168.56.11...
+    Connected to 192.168.56.11.
+    Escape character is '^]'.
+    gets firstkey secondkey
+    VALUE firstkey 0 5 22
+    Hello
+    VALUE secondkey 0 2 23
+    hi
+    END
+
+在node2节点使用telnet连接memcached服务器，并获取firstkey键和secondkey键的cas值::
+
+    [root@node2 ~]# telnet 192.168.56.11 11211
+    Trying 192.168.56.11...
+    Connected to 192.168.56.11.
+    Escape character is '^]'.
+    gets firstkey secondkey
+    VALUE firstkey 0 5 22
+    Hello
+    VALUE secondkey 0 2 23
+    hi
+    END
+
+在node1节点更新firstkey键的值，增加一个"!"，并获取firstkey键的cas值::
+
+    set firstkey 0 3600 6
+    Hello!
+    STORED
+    gets firstkey 
+    VALUE firstkey 0 6 24
+    Hello!
+    END
+
+可以发现firstkey键的cas值已经变成24，并且其值已经是"Hello!"。
+
+若此时，要在node2节点更新firstkey键的值，增加". Memcached!"，并得到更新后的值为"Hello. Memcached!", 并获取firstkey键的cas值，使用cas命令检查在最后一次取值后，是否有别的用户对数据进行了更新操作::
+
+    cas firstkey 0 3600 17 22
+    hello. Memcached!
+    EXISTS
+
+可以发现，未能正常存储，返回"EXISTS"，说明在最后一次取值后另外一个用户也在更新该数据。
+
+仍然在node2上面操作，再获取最新的CAS值，对firstkey进行更新::
+
+    gets firstkey
+    VALUE firstkey 0 6 24
+    Hello!
+    END
+    cas firstkey 0 3600 17 24   <-- 说明: 对firstkey键CAS值为24(也就是版本)进行修改
+    Hello! Memcached!
+    STORED
+    gets firstkey
+    VALUE firstkey 0 17 25   <-- 说明: 更新完成后，CAS版本号新增1，变成了25
+    Hello! Memcached!
+    END
 
 
+此次能够正常的更新firstkey键的值，原因是firstkey键的CAS值为24后，并没有其他的用户对该键进行修改，也就可以避免多用户同时对一个键进行修改。
 
+仍然在node2上面操作，返回 ``ERROR`` 或 ``NOT_FOUND`` 的情况::
 
+    cas thirdkey 0 3600 5     <-- 说明: 语法错误，未指定CAS版本号，返回"ERROR"
+    ERROR
+    cas thirdkey 0 3600 5 25   <-- 说明: thirdkey不存在，找不到CAS版本号是25的thirdkey，返回"NOT_FOUND"
+    hello
+    NOT_FOUND
 
+memcached的查找命令 ``get``  ``gets`` ``delete``  ``incr``  ``decr`` 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+- ``get`` 命令，获取存储到key键中的value值，如果key不存在，则返回空。
 
+语法如下::
 
+    get key               <-- 说明: 获取单个key的value值
+    get key1 key2 key3    <-- 说明: 获取多个key的value值
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
 
+获取键的值::
 
+    set firstkey 0 12 5  <-- 说明：设置firstkey键12秒后过期
+    first
+    STORED
+    get firstkey           <-- 说明：获取firstkey键的值，因为未过期，获取到值"first"
+    VALUE firstkey 0 5
+    first
+    END
+    get firstkey           <-- 说明：获取firstkey键的值，因为已经过期，获取不到值
+    END
+    get firstkey
+    END
+    set secondkey 0 900 6   <-- 说明：设置secondkey键900秒后过期
+    second
+    STORED
+    set thirdkey 0 900 5    <-- 说明：设置thirdkey键900秒后过期
+    third
+    STORED
+    get firstkey secondkey thirdkey   <-- 说明：同时获取多个键的值
+    VALUE secondkey 0 6
+    second
+    VALUE thirdkey 0 5
+    third
+    END
 
+- ``gets`` 命令，获取存储到key键中带有CAS令牌的value值，如果key不存在，则返回空。
 
+语法如下::
 
+    gets key               <-- 说明: 获取单个key的value值
+    gets key1 key2 key3    <-- 说明: 获取多个key的value值
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
 
+接上例，获取带CAS令牌的键的值::
 
+    gets firstkey
+    END
+    gets secondkey
+    VALUE secondkey 0 6 16     <-- 说明：secondkey键的CAS令牌是16
+    second
+    END
+    gets thirdkey
+    VALUE thirdkey 0 5 17     <-- 说明：thirdkey键的CAS令牌是17
+    third
+    END
+    
+    set fourthkey 0 900 6
+    fourth
+    STORED
+    get fourthkey
+    VALUE fourthkey 0 6
+    fourth
+    END
+    gets fourthkey
+    VALUE fourthkey 0 6 18     <-- 说明：fourthkey键的CAS令牌是18
+    fourth
+    END
 
+- ``delete`` 命令，删除已经存在的键。
 
+语法如下::
 
+    delete key [noreply]               <-- 说明: 删除key键
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
+    noreply: 告诉服务器不需要返回数据。
 
+输出信息如下::
+    
+    DELETED：删除成功。
+    ERROR：删除失败或语法错误。
+    NOT_FOUND：键不存在。
+
+删除memcached中的键::
+
+    [root@server ~]# telnet localhost 11211
+    Trying ::1...
+    Connected to localhost.
+    Escape character is '^]'.
+    set willdeletedkey 0 3600 5    <-- 说明: 设置键，存储成功
+    hello
+    STORED
+    get willdeletedkey
+    VALUE willdeletedkey 0 5
+    hello
+    END
+    delete willdeletedkey    <-- 说明: 删除键，删除成功，返回"DELETED"
+    DELETED
+    get willdeletedkey
+    END
+    delete willdeletedkey    <-- 说明: 删除键，删除失败，返回"NOT_FOUND"，因为键已经被删除了，系统中已经找不到该键
+    NOT_FOUND
+
+- ``incr`` 命令，对已经存在的键进行自增操作，操作的数据必须是十进制的32位无符号整数。
+- ``decr`` 命令，对已经存在的键进行自减操作，操作的数据必须是十进制的32位无符号整数。
+- 如果自增或自减成功，则返回自增或自减后的value值。
+
+语法如下::
+
+    incr key increment_value              <-- 说明: 对key的value进行自增操作，即value = value + increment_value
+    decr key decrement_value              <-- 说明: 对key的value进行自减操作，即value = value + decrement_value
+    
+    参数说明:
+    key：键值 key-value 结构中的 key，用于查找缓存值。
+    increment_value或decrement_value：增量值或减量值，必须是无符号整数。
+
+输出信息如下::
+    
+    CLIENT_ERROR：自增或自减的数据不是数字。
+    ERROR：自增或自减失败或语法错误。
+    NOT_FOUND：键不存在。
+
+删除memcached中的键::
+
+    set num 0 3600 2              <-- 说明: 设置num键的值为55
+    55
+    STORED
+    gets num                      <-- 说明: 设置num键的值
+    VALUE num 0 2 27
+    55
+    END
+    incr num 50                   <-- 说明: num键的值自增50，变成105
+    105
+    get num
+    VALUE num 0 3
+    105
+    END
+    decr num 100                 <-- 说明: num键的值自减100，变成5
+    5
+    get num
+    VALUE num 0 1
+    5
+    END
+
+异常输出::
+
+    incr num_notexist 1
+    NOT_FOUND
+    incr num abc
+    CLIENT_ERROR invalid numeric delta argument
+    incr num -7
+    CLIENT_ERROR invalid numeric delta argument
+    incr num 5.5
+    CLIENT_ERROR invalid numeric delta argument
+    incr num2abc
+    ERROR
+    incr num
+    ERROR
+
+memcached的统计命令 ``stats``  ``stats items`` ``stats slabs``  ``stats sizes``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``stats`` 命令，返回如PID、版本号、连接数、存储占用字节数等等统计信息。
+
+语法如下::
+
+    stats
+
+获取统计信息::
+
+    [root@server ~]# telnet localhost 11211
+    Trying ::1...
+    Connected to localhost.
+    Escape character is '^]'. 
+    stats       <-- 说明: 获取统计信息
+    STAT pid 13486       <-- 说明: Memcached服务端的PID
+    STAT uptime 35516       <-- 说明: 服务启动时间
+    STAT time 1559380900       <-- 说明: 服务端的Unix时间戳
+    STAT version 1.4.15       <-- 说明: Memcached的版本号
+    STAT libevent 2.0.21-stable       <-- 说明:
+    STAT pointer_size 64       <-- 说明: 操作系统指针大小
+    STAT rusage_user 0.775030       <-- 说明: 进程累计用户时间
+    STAT rusage_system 1.469022       <-- 说明: 进程累计系统时间
+    STAT curr_connections 11       <-- 说明: 当前连接数量
+    STAT total_connections 26       <-- 说明: Memecached运行以来连接总数
+    STAT connection_structures 13       <-- 说明: Memcached分配的连接结构数量
+    STAT reserved_fds 20       <-- 说明: 
+    STAT cmd_get 79       <-- 说明: get命令请求次数
+    STAT cmd_set 43       <-- 说明: set命令请求次数
+    STAT cmd_flush 0       <-- 说明:  flush命令请求次数
+    STAT cmd_touch 0       <-- 说明: touch命令请求次数
+    STAT get_hits 50       <-- 说明: get命令命中次数
+    STAT get_misses 29       <-- 说明: get命令未命中次数
+    STAT delete_misses 1       <-- 说明: delete命令未命中次数
+    STAT delete_hits 1       <-- 说明: delete命令命中次数
+    STAT incr_misses 1       <-- 说明: incr命令未命中次数
+    STAT incr_hits 3       <-- 说明: incr命令命中次数
+    STAT decr_misses 0       <-- 说明:  decr命令未命中次数
+    STAT decr_hits 1       <-- 说明:  decr命令命中次数
+    STAT cas_misses 1       <-- 说明: cas命令未命中次数
+    STAT cas_hits 1       <-- 说明:  cas命令命中次数
+    STAT cas_badval 2       <-- 说明: 使用擦拭次数
+    STAT touch_hits 0       <-- 说明: touch命令命中次数
+    STAT touch_misses 0       <-- 说明: touch命令未命中次数
+    STAT auth_cmds 0       <-- 说明:  认证命令处理的次数
+    STAT auth_errors 0       <-- 说明: 认证失败的次数
+    STAT bytes_read 4426       <-- 说明: 读取总字节数
+    STAT bytes_written 9572       <-- 说明: 写总字节数
+    STAT limit_maxbytes 67108864       <-- 说明: 分配的内存总字节大小
+    STAT accepting_conns 1       <-- 说明: 服务器是否达到过最大连接
+    STAT listen_disabled_num 0       <-- 说明: 失败的监听数
+    STAT threads 4       <-- 说明: 当前线程数
+    STAT conn_yields 0       <-- 说明: 连接操作主动放弃数目
+    STAT hash_power_level 16       <-- 说明: hashpower的level，可以在启动的时候设置
+    STAT hash_bytes 524288       <-- 说明: 内存使用总量单位为byte
+    STAT hash_is_expanding 0       <-- 说明: 是否正在扩大hash表
+    STAT bytes 161       <-- 说明: 当前存储占用的字节数
+    STAT curr_items 2       <-- 说明: 当前存储的数据总数
+    STAT total_items 31       <-- 说明: 启动以来存储的数据总数
+    STAT expired_unfetched 2       <-- 说明: item过期之前没有被touch过，也就是放进去之后就没更新过过期时间
+    STAT evicted_unfetched 0       <-- 说明: item替换覆盖之前没有被touch过，也就是放进去之后就没更新过过期时间
+    STAT evictions 0       <-- 说明: LRU释放的对象数目
+    STAT reclaimed 6       <-- 说明: 已过期的数据条目来存储新数据的数目
+    END
+
+其他统计命令::
+
+    stats items
+    STAT items:1:number 2
+    STAT items:1:age 3182
+    STAT items:1:evicted 0
+    STAT items:1:evicted_nonzero 0
+    STAT items:1:evicted_time 0
+    STAT items:1:outofmemory 0
+    STAT items:1:tailrepairs 0
+    STAT items:1:reclaimed 6
+    STAT items:1:expired_unfetched 2
+    STAT items:1:evicted_unfetched 0
+    END
+    
+    stats slabs
+    STAT 1:chunk_size 96
+    STAT 1:chunks_per_page 10922
+    STAT 1:total_pages 1
+    STAT 1:total_chunks 10922
+    STAT 1:used_chunks 2
+    STAT 1:free_chunks 10920
+    STAT 1:free_chunks_end 0
+    STAT 1:mem_requested 161
+    STAT 1:get_hits 49
+    STAT 1:cmd_set 43
+    STAT 1:delete_hits 1
+    STAT 1:incr_hits 3
+    STAT 1:decr_hits 1
+    STAT 1:cas_hits 1
+    STAT 1:cas_badval 2
+    STAT 1:touch_hits 0
+    STAT 2:chunk_size 120
+    STAT 2:chunks_per_page 8738
+    STAT 2:total_pages 1
+    STAT 2:total_chunks 8738
+    STAT 2:used_chunks 0
+    STAT 2:free_chunks 8738
+    STAT 2:free_chunks_end 0
+    STAT 2:mem_requested 0
+    STAT 2:get_hits 1
+    STAT 2:cmd_set 0
+    STAT 2:delete_hits 0
+    STAT 2:incr_hits 0
+    STAT 2:decr_hits 0
+    STAT 2:cas_hits 0
+    STAT 2:cas_badval 0
+    STAT 2:touch_hits 0
+    STAT active_slabs 2
+    STAT total_malloced 2097072
+    END
+
+    stats sizes
+    STAT 96 2
+    END
 
 
 
