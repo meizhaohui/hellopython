@@ -3162,6 +3162,13 @@ python-memcached处理NoSQL非关系型数据库memcached
 
 启动ipython，导入memcache模块，并查看相关帮助信息::
 
+    [root@server ~]# ipython
+    Python 3.6.7 (default, Dec  5 2018, 15:02:05) 
+    Type 'copyright', 'credits' or 'license' for more information
+    IPython 7.5.0 -- An enhanced Interactive Python. Type '?' for help.
+    
+    >>> import memcache                                                               
+    
     >>> memcache? 
     Type:        module
     String form: <module 'memcache' from '/usr/lib/python3.6/site-packages/memcache.py'>
@@ -3207,11 +3214,343 @@ python-memcached处理NoSQL非关系型数据库memcached
     
     Detailed Documentation
     ======================
-
+    
     More detailed documentation is available in the L{Client} class.
     
+基本操作::
+
+    #!/usr/bin/python3
+    """
+    @Time    : 2019/6/2 19:58
+    @Author  : Mei Zhaohui
+    @Email   : mzh.whut@gmail.com
+    @File    : usememcached.py
+    @Software: PyCharm
+    """
+    import memcache
+    import time
+    
+    
+    def main():
+        """main function"""
+        # 单节点memecached, debug=True表示运行出现错误时，显示错误信息，上线后需要移除该参数
+        mc = memcache.Client(['192.168.56.11:11211'], debug=True)
+        print('Memcached client:', mc)
+        result = mc.set('first_key', 'hello,memcached!')  # set设置键值，如果键不存在则创建，键存在则修改
+        print('result: ', result)  # 成功，则返回True
+        print("mc.get('first_key') = ", mc.get('first_key'))
+        print("mc.gets('first_key') = ", mc.gets('first_key'))
+        mc.set_multi({'second_key': 'hi', 'third_key': 'hi!'})  # 一次设置多个键
+        print("mc.get_multi(['second_key', 'third_key']) = ", mc.get_multi(['second_key', 'third_key']))
+        mc.replace('second_key', 'Hi!')  # 替换
+        mc.append('third_key', 'Memcached!')  # 尾部追加
+        mc.prepend('third_key', 'I am Python!')  # 首部追加
+        print("mc.get_multi(['second_key', 'third_key']) = ", mc.get_multi(['second_key', 'third_key']))
+        # third_result = mc.add('third_key', 'add again')  # add添加，如果键已经存在，则添加失败，返回False
+        mc.delete('fourth_key')  # 删除键
+        print(mc.add('fourth_key', 'for you', time=2))  # add添加，如果键不存在，则添加成功，返回True,设置超时2秒
+        time.sleep(1)  # 等待1秒
+        print("mc.get('fourth_key') = ", mc.get('fourth_key'))
+        time.sleep(1)  # 等待1秒
+        print("mc.get('fourth_key') = ", mc.get('fourth_key'))
+        mc.set('num', 55)
+        print("mc.get('num') = ", mc.get('num'))
+        mc.incr('num', 50)  # 自增
+        print("mc.get('num') = ", mc.get('num'))
+        mc.decr('num', 100)  # 自减
+        print("mc.get('num') = ", mc.get('num'))
+    
+    
+    if __name__ == '__main__':
+        main()
+
+运行usememcached.py显示结果如下::
+
+    Memcached client: <memcache.Client object at 0x000001D76186AB88>
+    result:  True
+    mc.get('first_key') =  hello,memcached!
+    mc.gets('first_key') =  hello,memcached!
+    mc.get_multi(['second_key', 'third_key']) =  {'second_key': 'hi', 'third_key': 'hi!'}
+    mc.get_multi(['second_key', 'third_key']) =  {'second_key': 'Hi!', 'third_key': 'I am Python!hi!Memcached!'}
+    True
+    mc.get('fourth_key') =  for you
+    mc.get('fourth_key') =  None
+    mc.get('num') =  55
+    mc.get('num') =  105
+    mc.get('num') =  5
+    
+    Process finished with exit code 0
+
+使用memcached集群
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+使用memcached集群:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 17,18,19
+   
+    #!/usr/bin/python3
+    """
+    @Time    : 2019/6/2 21:15
+    @Author  : Mei Zhaohui
+    @Email   : mzh.whut@gmail.com
+    @File    : use_memcached_cluster.py
+    @Software: PyCharm
+    """
+    import memcache
+    import time
 
 
+    def main():
+        """使用memcached集群，不设置权重"""
+        mc = memcache.Client(
+            [
+                '192.168.56.11:11211',
+                '192.168.56.12:11211',
+                '192.168.56.13:11211',
+            ],
+            debug=True)
+        for num in range(30):
+            mc.set('num' + str(num), pow(num, 2))
+        for num in range(30):
+            print("mc.get('num' + str(num)) = ", mc.get('num' + str(num)))
+
+
+    if __name__ == '__main__':
+        main()
+
+运行use_memcached_cluster.py，结果如下::
+
+    mc.get('num0') = 0
+    mc.get('num1') = 1
+    mc.get('num2') = 4
+    mc.get('num3') = 9
+    mc.get('num4') = 16
+    mc.get('num5') = 25
+    mc.get('num6') = 36
+    mc.get('num7') = 49
+    mc.get('num8') = 64
+    mc.get('num9') = 81
+    mc.get('num10') = 100
+    mc.get('num11') = 121
+    mc.get('num12') = 144
+    mc.get('num13') = 169
+    mc.get('num14') = 196
+    mc.get('num15') = 225
+    mc.get('num16') = 256
+    mc.get('num17') = 289
+    mc.get('num18') = 324
+    mc.get('num19') = 361
+    mc.get('num20') = 400
+    mc.get('num21') = 441
+    mc.get('num22') = 484
+    mc.get('num23') = 529
+    mc.get('num24') = 576
+    mc.get('num25') = 625
+    mc.get('num26') = 676
+    mc.get('num27') = 729
+    mc.get('num28') = 784
+    mc.get('num29') = 841
+
+    Process finished with exit code 0
+
+在三个节点上面查看键值对信息::
+
+    node1  '192.168.56.11:11211':
+    gets num0 num1 num2 num3 num4 num5 num6 num7 num8 num9 num10 num11 num12 num13 num14 num15 num16 num17 num18 num19 num20 num21 num22 num23 num24 num25 num26 num27 num28 num29
+    VALUE num1 2 1 283
+    1
+    VALUE num2 2 1 284
+    4
+    VALUE num3 2 1 285
+    9
+    VALUE num6 2 2 286
+    36
+    VALUE num8 2 2 287
+    64
+    VALUE num10 2 3 288
+    100
+    VALUE num13 2 3 289
+    169
+    VALUE num14 2 3 290
+    196
+    VALUE num17 2 3 291
+    289
+    VALUE num23 2 3 292
+    529
+    VALUE num25 2 3 293
+    625
+    END
+    可以发现在node1上存储了11个键值对
+
+    node2  '192.168.56.12:11211':
+    gets num0 num1 num2 num3 num4 num5 num6 num7 num8 num9 num10 num11 num12 num13 num14 num15 num16 num17 num18 num19 num20 num21 num22 num23 num24 num25 num26 num27 num28 num29
+    VALUE num7 2 2 130
+    49
+    VALUE num11 2 3 131
+    121
+    VALUE num18 2 3 132
+    324
+    VALUE num21 2 3 133
+    441
+    VALUE num24 2 3 134
+    576
+    VALUE num29 2 3 135
+    841
+    END
+    可以发现在node2上存储了6个键值对
+
+    node3  '192.168.56.13:11211'
+    gets num0 num1 num2 num3 num4 num5 num6 num7 num8 num9 num10 num11 num12 num13 num14 num15 num16 num17 num18 num19 num20 num21 num22 num23 num24 num25 num26 num27 num28 num29
+    VALUE num0 2 1 142
+    0
+    VALUE num4 2 2 143
+    16
+    VALUE num5 2 2 144
+    25
+    VALUE num9 2 2 145
+    81
+    VALUE num12 2 3 146
+    144
+    VALUE num15 2 3 147
+    225
+    VALUE num16 2 3 148
+    256
+    VALUE num19 2 3 149
+    361
+    VALUE num20 2 3 150
+    400
+    VALUE num22 2 3 151
+    484
+    VALUE num26 2 3 152
+    676
+    VALUE num27 2 3 153
+    729
+    VALUE num28 2 3 154
+    784
+    END
+    可以发现在node3上存储了13个键值对
+    
+可以发现在3个节点上存储键值对的比例为11:6:13，三个节点上面存储的键值对数量差不多。
+
+设置memcached集群的权重:
+
+.. code-block:: python
+   :linenos:
+   :emphasize-lines: 17,18,19
+   
+    #!/usr/bin/python3
+    """
+    @Time    : 2019/6/2 21:15
+    @Author  : Mei Zhaohui
+    @Email   : mzh.whut@gmail.com
+    @File    : use_memcached_cluster.py
+    @Software: PyCharm
+    """
+    import memcache
+    import time
+
+
+    def main():
+        """使用memcached集群，设置权重,按7:2:1权重保存数据"""
+        mc = memcache.Client(
+            [
+                ('192.168.56.11:11211', 7),
+                ('192.168.56.12:11211', 2),
+                ('192.168.56.13:11211', 1)
+            ],
+            debug=True)
+        mc.flush_all()
+        for num in range(30):
+            mc.set('num' + str(num), pow(num, 2))
+        for num in range(30):
+            print("mc.get('num{}') = {}".format(num, mc.get('num' + str(num))))
+
+
+    if __name__ == '__main__':
+        main()
+
+在三个节点上面查看键值对信息::
+
+    node1  '192.168.56.11:11211':
+    gets num0 num1 num2 num3 num4 num5 num6 num7 num8 num9 num10 num11 num12 num13 num14 num15 num16 num17 num18 num19 num20 num21 num22 num23 num24 num25 num26 num27 num28 num29
+    VALUE num1 2 1 305
+    1
+    VALUE num2 2 1 306
+    4
+    VALUE num3 2 1 307
+    9
+    VALUE num4 2 2 308
+    16
+    VALUE num6 2 2 309
+    36
+    VALUE num8 2 2 310
+    64
+    VALUE num9 2 2 311
+    81
+    VALUE num10 2 3 312
+    100
+    VALUE num12 2 3 313
+    144
+    VALUE num14 2 3 314
+    196
+    VALUE num15 2 3 315
+    225
+    VALUE num16 2 3 316
+    256
+    VALUE num18 2 3 317
+    324
+    VALUE num19 2 3 318
+    361
+    VALUE num20 2 3 319
+    400
+    VALUE num21 2 3 320
+    441
+    VALUE num23 2 3 321
+    529
+    VALUE num28 2 3 322
+    784
+    VALUE num29 2 3 323
+    841
+    END
+    可以发现在node1上存储了19个键值对
+    
+    node2  '192.168.56.12:11211':
+    gets num0 num1 num2 num3 num4 num5 num6 num7 num8 num9 num10 num11 num12 num13 num14 num15 num16 num17 num18 num19 num20 num21 num22 num23 num24 num25 num26 num27 num28 num29
+    VALUE num0 2 1 142
+    0
+    VALUE num13 2 3 143
+    169
+    VALUE num17 2 3 144
+    289
+    VALUE num24 2 3 145
+    576
+    VALUE num26 2 3 146
+    676
+    END
+    可以发现在node2上存储了5个键值对
+
+    node3  '192.168.56.13:11211':
+    gets num0 num1 num2 num3 num4 num5 num6 num7 num8 num9 num10 num11 num12 num13 num14 num15 num16 num17 num18 num19 num20 num21 num22 num23 num24 num25 num26 num27 num28 num29
+    VALUE num5 2 2 168
+    25
+    VALUE num7 2 2 169
+    49
+    VALUE num11 2 3 170
+    121
+    VALUE num22 2 3 171
+    484
+    VALUE num25 2 3 172
+    625
+    VALUE num27 2 3 173
+    729
+    END
+    可以发现在node3上存储了6个键值对
+    
+可以发现在3个节点上存储键值对的比例为19:5:6，明显在节点node1上面存储的数据多一些。
+
+    
 redis模块处理NoSQL非关系型数据库Redis
 -----------------------------------------------------
 
