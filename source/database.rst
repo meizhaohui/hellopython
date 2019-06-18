@@ -3554,6 +3554,212 @@ python-memcached处理NoSQL非关系型数据库memcached
 redis模块处理NoSQL非关系型数据库Redis
 -----------------------------------------------------
 
+- MySQL是关系型数据库，是持久化存储的，查询检索的话，会涉及到磁盘IO操作，为了提高性能，可以使用缓存技术，Redis和memcached都是缓存数据库，，可以大大提升高数据量的web访问速度。
+- memcached仅仅支持简单的key-value数据结构，而Redis支持的数据类型更多，如String、Hash、List、Set和Sorted Set。
+- web应用中一般采用MySQL+Redis的方式，web应用每次先访问Redis，如果没有找到数据，才去访问MySQL。
+- Redis性能极高: Redis读的速度是110000次/s，写的速度是81000次/s。
+- Redis支持数据的持久化，可以将内存中的数据保存在磁盘中，重启的时候可以再次加载进行使用。 
+
+
+Redis的安装
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+参考 `Redis Quick Start <https://redis.io/topics/quickstart>`_ ，可知官方提供使用源码安装，因为Redis除了需要GCC和libc的支持外，没有别有依赖。
+
+下载::
+
+    [root@server ~]# wget http://download.redis.io/redis-stable.tar.gz
+    --2019-06-18 22:20:19--  http://download.redis.io/redis-stable.tar.gz
+    Resolving download.redis.io (download.redis.io)... 109.74.203.151
+    Connecting to download.redis.io (download.redis.io)|109.74.203.151|:80... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 2014657 (1.9M) [application/x-gzip]
+    Saving to: ‘redis-stable.tar.gz.1’
+
+    15% [=============>                                                                                ] 320,584     25.8KB/s  eta 63s   
+    [root@server ~]# ls -lah redis-stable.tar.gz
+    -rw-r--r--. 1 root root 2.0M May 16 00:26 redis-stable.tar.gz
+
+解压::
+
+    [root@server ~]# tar -zxvf redis-stable.tar.gz
+    
+切换目录::
+
+    [root@server ~]# cd redis-stable
+
+编译::
+
+    [root@server redis-stable]# make
+    [root@server redis-stable]# echo $?
+    0
+
+安装::
+
+    [root@server redis-stable]# make install
+    [root@server redis-stable]# echo $?
+    0
+
+说明安装成功！
+
+检查redis命令::
+
+    [root@server redis-stable]# redis- 连按两次tab
+    redis-benchmark  redis-check-aof  redis-check-rdb  redis-cli        redis-sentinel   redis-server  
+    [root@server redis-stable]# whereis redis-server 
+    redis-server: /usr/local/bin/redis-server
+    [root@server redis-stable]# whereis redis-*
+    redis-*:[root@server redis-stable]# ls -lah /usr/local/bin/redis*
+    -rwxr-xr-x. 1 root root 4.2M Jun 18 22:28 /usr/local/bin/redis-benchmark
+    -rwxr-xr-x. 1 root root 7.8M Jun 18 22:28 /usr/local/bin/redis-check-aof
+    -rwxr-xr-x. 1 root root 7.8M Jun 18 22:28 /usr/local/bin/redis-check-rdb
+    -rwxr-xr-x. 1 root root 4.6M Jun 18 22:28 /usr/local/bin/redis-cli
+    lrwxrwxrwx. 1 root root   12 Jun 18 22:28 /usr/local/bin/redis-sentinel -> redis-server
+    -rwxr-xr-x. 1 root root 7.8M Jun 18 22:28 /usr/local/bin/redis-server
+
+- redis-server是Redis Server本身。
+- redis-sentinel是Redis Sentinel可执行文件（监视和故障转移）。
+- redis-cli是与Redis交互的命令行界面实用程序。
+- redis-benchmark用于检查Redis的性能。
+- redis-check-aof和redis-check-dump在极少数损坏的数据文件中很有用。
+
+
+启动Redis
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+最简单的启动Redis的方式是直接运行redis-server命令::
+
+    [root@server ~]# redis-server 
+    17608:C 18 Jun 2019 22:38:37.232 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+    17608:C 18 Jun 2019 22:38:37.232 # Redis version=5.0.5, bits=64, commit=00000000, modified=0, pid=17608, just started
+    17608:C 18 Jun 2019 22:38:37.232 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+    17608:M 18 Jun 2019 22:38:37.233 * Increased maximum number of open files to 10032 (it was originally set to 1024).
+                    _._                                                  
+               _.-``__ ''-._                                             
+          _.-``    `.  `_.  ''-._           Redis 5.0.5 (00000000/0) 64 bit
+      .-`` .-```.  ```\/    _.,_ ''-._                                   
+     (    '      ,       .-`  | `,    )     Running in standalone mode
+     |`-._`-...-` __...-.``-._|'` _.-'|     Port: 6379
+     |    `-._   `._    /     _.-'    |     PID: 17608
+      `-._    `-._  `-./  _.-'    _.-'                                   
+     |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+     |    `-._`-._        _.-'_.-'    |           http://redis.io        
+      `-._    `-._`-.__.-'_.-'    _.-'                                   
+     |`-._`-._    `-.__.-'    _.-'_.-'|                                  
+     |    `-._`-._        _.-'_.-'    |                                  
+      `-._    `-._`-.__.-'_.-'    _.-'                                   
+          `-._    `-.__.-'    _.-'                                       
+              `-._        _.-'                                           
+                  `-.__.-'                                               
+
+    17608:M 18 Jun 2019 22:38:37.233 # WARNING: The TCP backlog setting of 511 cannot be enforced because /proc/sys/net/core/somaxconn is set to the lower value of 128.
+    17608:M 18 Jun 2019 22:38:37.233 # Server initialized
+    17608:M 18 Jun 2019 22:38:37.233 # WARNING overcommit_memory is set to 0! Background save may fail under low memory condition. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+    17608:M 18 Jun 2019 22:38:37.233 # WARNING you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command 'echo never > /sys/kernel/mm/transparent_hugepage/enabled' as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled.
+    17608:M 18 Jun 2019 22:38:37.233 * Ready to accept connections
+
+能够正常看到上面的输出则说明Redis安装成功啦!!
+
+检查Redis是否正常工作
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+在SecureCRT克隆一个Redis-server的新的窗口，并使用redis-cli命令与Redis通信，简单的运行 ``ping`` 看是否能ping通::
+
+    [root@server ~]# redis-cli ping
+    PONG
+    [root@server ~]# 
+    [root@server ~]# redis-cli
+    127.0.0.1:6379> ping
+    PONG
+    127.0.0.1:6379> ping
+    PONG
+    127.0.0.1:6379> 
+
+查看redis-cli帮助信息::
+
+    127.0.0.1:6379> help
+    redis-cli 5.0.5
+    To get help about Redis commands type:
+          "help @<group>" to get a list of commands in <group>
+          "help <command>" for help on <command>
+          "help <tab>" to get a list of possible help topics
+          "quit" to exit
+
+    To set redis-cli preferences:
+          ":set hints" enable online hints
+          ":set nohints" disable online hints
+    Set your preferences in ~/.redisclirc
+
+
+关闭远程的Redis服务器::
+
+    127.0.0.1:6379> help shutdown
+
+      SHUTDOWN [NOSAVE|SAVE]
+      summary: Synchronously save the dataset to disk and then shut down the server
+      since: 1.0.0
+      group: server
+
+    127.0.0.1:6379> shutdown SAVE
+    not connected> quit
+    [root@server ~]# 
+
+在Redis服务器端的前台可以看到打印的消息如下::
+
+    17608:M 18 Jun 2019 22:51:39.238 # User requested shutdown...
+    17608:M 18 Jun 2019 22:51:39.238 * Saving the final RDB snapshot before exiting.
+    17608:M 18 Jun 2019 22:51:39.576 * DB saved on disk
+    17608:M 18 Jun 2019 22:51:39.576 # Redis is now ready to exit, bye bye...
+
+说明通信正常，redis-cli能够正常的控制redis-server端工作。
+
+Redis配置
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+在上面的示例中，Redis在没有任何显式配置文件的情况下启动，因此所有参数都将使用内部默认值。 如果你正在使用它来开发Redis或者用于开发，那么这是完全正常的，但对于生产环境，你应该使用配置文件。
+
+我们使用Redis配置文件。
+
+将源文件中的redis.conf复制到/etc目录下::
+
+    [root@server ~]# cp ~/redis-stable/redis.conf /etc/redis.conf
+    [root@server ~]# ls -lah /etc/redis.conf 
+    -rw-r--r--. 1 root root 61K Jun 18 22:57 /etc/redis.conf
+    
+前面在启动redis服务器后，都是在前台启动的，需要重新启动一个客户端来进行登陆操作。这样非常不方便，所以我们需要设置后台启动。
+
+修改配置文件，将 ``daemonize no`` 修改为 ``daemonize yes`` ::
+
+    [root@server ~]# sed -i '136s/daemonize no/daemonize yes/g' /etc/redis.conf 
+    [root@server ~]# cat -n /etc/redis.conf|sed -n '134,136p'
+       134  # By default Redis does not run as a daemon. Use 'yes' if you need it.
+       135  # Note that Redis will write a pid file in /var/run/redis.pid when daemonized.
+       136  daemonize yes
+    [root@server ~]#
+
+启动Redis时指定配置文件::
+
+    [root@server ~]# redis-server /etc/redis.conf
+    17750:C 18 Jun 2019 23:03:37.223 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+    17750:C 18 Jun 2019 23:03:37.223 # Redis version=5.0.5, bits=64, commit=00000000, modified=0, pid=17750, just started
+    17750:C 18 Jun 2019 23:03:37.223 # Configuration loaded
+    [root@server ~]# ps -ef|grep redis
+    root     17751     1  0 23:03 ?        00:00:00 redis-server 127.0.0.1:6379
+    root     17756 13228  0 23:03 pts/0    00:00:00 grep --color=auto redis
+    [root@server ~]# 
+    [root@server ~]# redis-cli ping
+    PONG
+    [root@server ~]# redis-cli
+    127.0.0.1:6379> ping 
+    PONG
+    127.0.0.1:6379> shutdown SAVE
+    not connected> 
+    not connected> 
+    not connected> quit
+    [root@server ~]# ps -ef|grep redis
+    root     17766 13228  0 23:07 pts/0    00:00:00 grep --color=auto redis
+    
+可以发现Redis已经在后台运行了！不需要另外开窗口就可以运行redis-cli命令了！
 
 参考文献:
 
@@ -3568,3 +3774,5 @@ redis模块处理NoSQL非关系型数据库Redis
 - `dataset: databases for lazy people: API documentation <https://dataset.readthedocs.io/en/latest/api.html>`_
 - `dataset: databases for lazy people: Quickstart <https://dataset.readthedocs.io/en/latest/quickstart.html>`_
 - `Python的"懒人"包DataSet解析 <https://cloud.tencent.com/developer/article/1376850>`_
+- `Redis Quick Start <https://redis.io/topics/quickstart>`_
+- `Redis安装与卸载 <https://www.cnblogs.com/zerotomax/p/7468833.html>`_
