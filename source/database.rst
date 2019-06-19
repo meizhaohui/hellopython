@@ -3761,6 +3761,284 @@ Redis配置
     
 可以发现Redis已经在后台运行了！不需要另外开窗口就可以运行redis-cli命令了！
 
+将Redis配置为系统服务
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+配置Redis为系统服务实质是在 ``/usr/lib/systemd/system/`` 目录下创建一下 ``redis.service`` 文件。
+
+我们配置一下 ``/usr/lib/systemd/system/redis.service`` ，其内容如下::
+
+    [root@server ~]# cat /usr/lib/systemd/system/redis.service
+    [Unit]
+    Description=Redis Server Manager
+    After=network.target
+
+    [Service]
+    Type=forking
+    PIDFile=/var/run/redis_6379.pid
+    ExecStartPre=/usr/local/bin/redis-server -v
+    ExecStartPost=/usr/bin/echo "Done!!!"
+    ExecStart=/usr/local/bin/redis-server /etc/redis.conf
+    ExecReload=/bin/kill -s HUP $MAINPID
+    ExecStop=/usr/local/bin/redis-cli shutdown
+    KillSignal=SIGQUIT
+    TimeoutStopSec=5
+    KillMode=process
+    PrivateTmp=true
+
+    [Install]
+    WantedBy=multi-user.target
+    [root@server ~]# 
+
+配置一下 ``/etc/redis.conf`` 设置一下 ``logfile`` 目录，并且创建目录 ``/var/log/redis/`` ::
+
+    [root@server ~]# cat -n /etc/redis.conf|sed -n '168,172p'
+       168  # Specify the log file name. Also the empty string can be used to force
+       169  # Redis to log on the standard output. Note that if you use standard
+       170  # output for logging but daemonize, logs will be sent to /dev/null
+       171  logfile "/var/log/redis/redis.log"
+       172
+    [root@server ~]# mkdir -p /var/log/redis/
+
+重新启动systemctl::
+
+    [root@server ~]# systemctl daemon-reload
+
+测试Redis的启动、查看状态、停止、重启等::
+
+    [root@server ~]# systemctl daemon-reload
+    # 说明：启动Redis服务
+    [root@server ~]# systemctl start redis
+    [root@server ~]# systemctl status redis
+    ● redis.service - Redis Server Manager
+       Loaded: loaded (/usr/lib/systemd/system/redis.service; disabled; vendor preset: disabled)
+       Active: active (running) since Wed 2019-06-19 22:11:42 CST; 7s ago
+      Process: 13906 ExecStartPost=/usr/bin/echo Done!!! (code=exited, status=0/SUCCESS)
+      Process: 13903 ExecStart=/usr/local/bin/redis-server /etc/redis.conf (code=exited, status=0/SUCCESS)
+      Process: 13901 ExecStartPre=/usr/local/bin/redis-server -v (code=exited, status=0/SUCCESS)
+     Main PID: 13905 (redis-server)
+        Tasks: 4
+       Memory: 6.3M
+       CGroup: /system.slice/redis.service
+               └─13905 /usr/local/bin/redis-server 127.0.0.1:6379
+
+    Jun 19 22:11:42 server.hopewait systemd[1]: Starting Redis Server Manager...
+    Jun 19 22:11:42 server.hopewait redis-server[13901]: Redis server v=5.0.5 sha=00000000:0 malloc=jemalloc-5.1.0 bits=64 build=a...9cfcb5
+    Jun 19 22:11:42 server.hopewait systemd[1]: Started Redis Server Manager.
+    Jun 19 22:11:42 server.hopewait echo[13906]: Done!!!
+    Hint: Some lines were ellipsized, use -l to show in full.
+    [root@server ~]# ps -ef|grep redis
+    root     13905     1  0 22:11 ?        00:00:00 /usr/local/bin/redis-server 127.0.0.1:6379
+    root     13914 13280  0 22:12 pts/0    00:00:00 grep --color=auto redis
+    [root@server ~]# netstat -tunlp|grep redis
+    tcp        0      0 127.0.0.1:6379          0.0.0.0:*               LISTEN      13905/redis-server 
+    
+    
+    # 说明：重启Redis服务
+    [root@server ~]# systemctl restart redis
+    [root@server ~]# systemctl status redis
+    ● redis.service - Redis Server Manager
+       Loaded: loaded (/usr/lib/systemd/system/redis.service; disabled; vendor preset: disabled)
+       Active: active (running) since Wed 2019-06-19 22:13:45 CST; 7s ago
+      Process: 13928 ExecStop=/usr/local/bin/redis-cli shutdown (code=exited, status=0/SUCCESS)
+      Process: 13936 ExecStartPost=/usr/bin/echo Done!!! (code=exited, status=0/SUCCESS)
+      Process: 13933 ExecStart=/usr/local/bin/redis-server /etc/redis.conf (code=exited, status=0/SUCCESS)
+      Process: 13932 ExecStartPre=/usr/local/bin/redis-server -v (code=exited, status=0/SUCCESS)
+     Main PID: 13935 (redis-server)
+        Tasks: 4
+       Memory: 6.3M
+       CGroup: /system.slice/redis.service
+               └─13935 /usr/local/bin/redis-server 127.0.0.1:6379
+
+    Jun 19 22:13:45 server.hopewait systemd[1]: Stopped Redis Server Manager.
+    Jun 19 22:13:45 server.hopewait systemd[1]: Starting Redis Server Manager...
+    Jun 19 22:13:45 server.hopewait redis-server[13932]: Redis server v=5.0.5 sha=00000000:0 malloc=jemalloc-5.1.0 bits=64 build=a...9cfcb5
+    Jun 19 22:13:45 server.hopewait systemd[1]: Started Redis Server Manager.
+    Jun 19 22:13:45 server.hopewait echo[13936]: Done!!!
+    Hint: Some lines were ellipsized, use -l to show in full.
+
+    # 说明:停止Redis服务
+    [root@server ~]# systemctl stop redis
+    [root@server ~]# systemctl status redis
+    ● redis.service - Redis Server Manager
+       Loaded: loaded (/usr/lib/systemd/system/redis.service; disabled; vendor preset: disabled)
+       Active: inactive (dead)
+
+    Jun 19 22:11:42 server.hopewait systemd[1]: Started Redis Server Manager.
+    Jun 19 22:11:42 server.hopewait echo[13906]: Done!!!
+    Jun 19 22:13:44 server.hopewait systemd[1]: Stopping Redis Server Manager...
+    Jun 19 22:13:45 server.hopewait systemd[1]: Stopped Redis Server Manager.
+    Jun 19 22:13:45 server.hopewait systemd[1]: Starting Redis Server Manager...
+    Jun 19 22:13:45 server.hopewait redis-server[13932]: Redis server v=5.0.5 sha=00000000:0 malloc=jemalloc-5.1.0 bits=64 build=a...9cfcb5
+    Jun 19 22:13:45 server.hopewait systemd[1]: Started Redis Server Manager.
+    Jun 19 22:13:45 server.hopewait echo[13936]: Done!!!
+    Jun 19 22:15:54 server.hopewait systemd[1]: Stopping Redis Server Manager...
+    Jun 19 22:15:54 server.hopewait systemd[1]: Stopped Redis Server Manager.
+    Hint: Some lines were ellipsized, use -l to show in full.
+    [root@server ~]# ps -ef|grep redis
+    root     13956 13280  0 22:16 pts/0    00:00:00 grep --color=auto redis
+
+将Redis服务加入开机启动::
+
+    [root@server ~]# systemctl enable redis
+    Created symlink from /etc/systemd/system/multi-user.target.wants/redis.service to /usr/lib/systemd/system/redis.service.
+
+是否开机自启::
+
+    [root@server ~]# systemctl is-enabled redis
+    enabled
+
+修改Redis配置
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+创建Redis缓存文件目录 ``/var/redis-data`` ::
+
+    [root@server ~]# mkdir -p /var/redis-data
+    [root@server ~]# ls -lah /var/redis-data/
+
+下面介绍几个比较重要的配置::
+
+    # 设置客户端连接时的超时时间，单位为秒。当客户端在这段时间内没有发出任何指令，那么关闭该连接
+    # Close the connection after a client is idle for N seconds (0 to disable)
+    timeout 300
+    
+    # 后台启动Redis
+    # By default Redis does not run as a daemon. Use 'yes' if you need it.
+    # Note that Redis will write a pid file in /var/run/redis.pid when daemonized.
+    daemonize yes
+    
+    # 设置PID文件
+    # If a pid file is specified, Redis writes it where specified at startup
+    # and removes it at exit.
+    #
+    # When the server runs non daemonized, no pid file is created if none is
+    # specified in the configuration. When the server is daemonized, the pid file
+    # is used even if not specified, defaulting to "/var/run/redis.pid".
+    #
+    # Creating a pid file is best effort: if Redis is not able to create it
+    # nothing bad happens, the server will start and run normally.
+    pidfile /var/run/redis_6379.pid
+    
+    # 指定日志级别
+    # Specify the server verbosity level.
+    # This can be one of:
+    # debug (a lot of information, useful for development/testing)
+    # verbose (many rarely useful info, but not a mess like the debug level)
+    # notice (moderately verbose, what you want in production probably)
+    # warning (only very important / critical messages are logged)
+    loglevel notice
+    
+    # 指定日志文件，默认值为stdout，标准输出，若后台模式会输出到/dev/null
+    # Specify the log file name. Also the empty string can be used to force
+    # Redis to log on the standard output. Note that if you use standard
+    # output for logging but daemonize, logs will be sent to /dev/null
+    logfile "/var/log/redis/redis.log"
+    
+    # 可用数据库数量
+    # Set the number of databases. The default database is DB 0, you can select
+    # a different one on a per-connection basis using SELECT <dbid> where
+    # dbid is a number between 0 and 'databases'-1
+    databases 16
+    
+    # 保存到磁盘，指出在多长时间内，有多少次更新操作，就将数据同步到数据文件rdb
+    # 默认配置文件中的设置，就设置了三个条件:
+    # save 900 1   900秒内至少有1个key被改变
+    # save 300 10  300秒内至少有300个key被改变
+    # save 60 10000   60秒内至少有10000个key被改变
+    # Save the DB on disk:
+    #
+    #   save <seconds> <changes>
+    #
+    #   Will save the DB if both the given number of seconds and the given
+    #   number of write operations against the DB occurred.
+    #
+    #   In the example below the behaviour will be to save:
+    #   after 900 sec (15 min) if at least 1 key changed
+    #   after 300 sec (5 min) if at least 10 keys changed
+    #   after 60 sec if at least 10000 keys changed
+    #
+    #   Note: you can disable saving completely by commenting out all "save" lines.
+    #
+    #   It is also possible to remove all the previously configured save
+    #   points by adding a save directive with a single empty string argument
+    #   like in the following example:
+    #
+    #   save ""
+    
+    save 900 1
+    save 300 10
+    save 60 10000
+    
+    # 本地持久化数据库文件名，默认值为 dump.rdb
+    # The filename where to dump the DB
+    dbfilename dump.rdb
+    
+    # 缓存目录，默认为当前目录./
+    # The working directory.
+    #
+    # The DB will be written inside this directory, with the filename specified
+    # above using the 'dbfilename' configuration directive.
+    #
+    # The Append Only File will also be created inside this directory.
+    #
+    # Note that you must specify a directory here, not a file name.
+    dir /var/redis-data
+    
+    # 设置最大客户端连接数，默认为10000
+    # Set the max number of connected clients at the same time. By default
+    # this limit is set to 10000 clients, however if the Redis server is not
+    # able to configure the process file limit to allow for the specified limit
+    # the max number of allowed clients is set to the current file limit
+    # minus 32 (as Redis reserves a few file descriptors for internal uses).
+    #
+    # Once the limit is reached Redis will close all the new connections sending
+    # an error 'max number of clients reached'.
+    #
+    maxclients 128
+    
+    # 客户端连接密码设置，官方推荐使用防火墙禁止外部连接到Redis，因为是本机访问，可以不设置密码
+    ################################## SECURITY ###################################
+    
+    # Require clients to issue AUTH <PASSWORD> before processing any other
+    # commands.  This might be useful in environments in which you do not trust
+    # others with access to the host running redis-server.
+    #
+    # This should stay commented out for backward compatibility and because most
+    # people do not need auth (e.g. they run their own servers).
+    #
+    # Warning: since Redis is pretty fast an outside user can try up to
+    # 150k passwords per second against a good box. This means that you should
+    # use a very strong password otherwise it will be very easy to break.
+    #
+    # requirepass foobared
+
+测试Redis是否保存数据到磁盘，先重启一下Redis服务，再写入数据::
+    
+    [root@server ~]# systemctl restart redis
+    [root@server ~]# redis-cli 
+    127.0.0.1:6379> ping
+    PONG
+    127.0.0.1:6379> set firstkey Hello,Redis
+    OK
+    127.0.0.1:6379> get firstkey
+    "Hello,Redis"
+    127.0.0.1:6379> 
+    127.0.0.1:6379> SAVE
+    OK
+    127.0.0.1:6379> quit
+
+
+查看 ``/var/redis-data/`` 目录，发现已经写入数据::
+
+    [root@server ~]# ls -lah /var/redis-data/
+    total 8.0K
+    drwxr-xr-x.  2 root root   22 Jun 19 23:27 .
+    drwxr-xr-x. 21 root root 4.0K Jun 19 22:36 ..
+    -rw-r--r--.  1 root root  119 Jun 19 23:27 dump.rdb
+
+
+
+
 参考文献:
 
 - `sqlite3 — DB-API 2.0 interface for SQLite databases <https://docs.python.org/3/library/sqlite3.html>`_
@@ -3776,3 +4054,5 @@ Redis配置
 - `Python的"懒人"包DataSet解析 <https://cloud.tencent.com/developer/article/1376850>`_
 - `Redis Quick Start <https://redis.io/topics/quickstart>`_
 - `Redis安装与卸载 <https://www.cnblogs.com/zerotomax/p/7468833.html>`_
+- `redis常用命令、常见错误、配置技巧等分享 <https://www.cnblogs.com/itxuexiwang/p/5200734.html>`_
+- `centos下部署redis服务环境及其配置说明 <https://www.cnblogs.com/kevingrace/p/6265722.html>`_
