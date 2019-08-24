@@ -3287,8 +3287,8 @@ python-memcached处理NoSQL非关系型数据库memcached
 使用memcached集群:
 
 .. code-block:: python
-   :linenos:
-   :emphasize-lines: 17,18,19
+    :linenos:
+    :emphasize-lines: 17,18,19
    
     #!/usr/bin/python3
     """
@@ -3437,8 +3437,8 @@ python-memcached处理NoSQL非关系型数据库memcached
 设置memcached集群的权重:
 
 .. code-block:: python
-   :linenos:
-   :emphasize-lines: 17,18,19
+    :linenos:
+    :emphasize-lines: 17,18,19
    
     #!/usr/bin/python3
     """
@@ -4012,6 +4012,8 @@ Redis配置
     #
     # requirepass foobared
 
+注意，需要检查上面的 ``/var/redis-data/`` 目录是否创建成功，否则下面的redis重启无法启动！
+
 测试Redis是否保存数据到磁盘，先重启一下Redis服务，再写入数据::
     
     [root@server ~]# systemctl restart redis
@@ -4037,6 +4039,201 @@ Redis配置
     -rw-r--r--.  1 root root  119 Jun 19 23:27 dump.rdb
 
 
+为了让远程能够访问Redis服务器，可以防火墙开放6379端口::
+
+    [root@server ~]# firewall-cmd --permanent --add-port=6379/tcp
+    success
+    [root@server ~]# firewall-cmd --reload
+    success
+    [root@server ~]# firewall-cmd --list-all
+    public (active)
+      target: default
+      icmp-block-inversion: no
+      interfaces: enp0s3 enp0s8
+      sources: 
+      services: ssh dhcpv6-client ftp
+      ports: 21/tcp 6379/tcp
+      protocols: 
+      masquerade: no
+      forward-ports: 
+      source-ports: 
+      icmp-blocks: 
+      rich rules: 
+
+
+redis命令的使用
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Redis的命令非常多，如下图所示：
+
+.. image:: ./_static/images/redis_command_1.png
+.. image:: ./_static/images/redis_command_2.png
+
+详细可参考 `Redis 命令参考 <http://doc.redisfans.com/>`_
+
+
+Python处理Redis
+-----------------------------------------------------
+
+- Python的Redis驱动程序redis-py在GitHub托管代码和测试用例。
+- 在线文档 https://redis-py.readthedocs.io/en/latest/genindex.html
+- 安装 ``pip install redis``
+
+Redis字符串
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- 具有单一值的一个键被称作Redis的字符串。简单的Python数据类型可以自动转换成Redis字符串。
+
+下面连接远程主机上指定端口的Redis服务器：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 6,8
+    
+    $ ipython
+    Python 3.6.2 (v3.6.2:5fd33b5, Jul  8 2017, 04:57:36) [MSC v.1900 64 bit (AMD64)]
+    Type 'copyright', 'credits' or 'license' for more information
+    IPython 7.4.0 -- An enhanced Interactive Python. Type '?' for help.
+    
+    >>> import redis
+    
+    >>> conn = redis.Redis('192.168.56.103', 6379)
+    
+    >>> conn
+    Redis<ConnectionPool<Connection<host=192.168.56.103,port=6379,db=0>>>
+    
+列出所有的键(目前为空):
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 3
+    
+    >>> conn.keys('*')
+    ... 省略
+    ConnectionError: Error 10061 connecting to 192.168.56.103:6379. 由于目标计算机积极拒绝，无法连接。.
+
+可以发现无法连接到远程Redis服务器，这是由于Redis默认禁止远程访问。
+
+
+由于Redis增加了 ``protected-mode`` 保护机制，并且通过 ``bind 127.0.0.1`` 来限制了ip访问，默认为127.0.0.1, 查看 ``/ect/redis.conf`` 配置文件内容:
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 4,10,16
+    
+    66 # IF YOU ARE SURE YOU WANT YOUR INSTANCE TO LISTEN TO ALL THE INTERFACES
+    67 # JUST COMMENT THE FOLLOWING LINE.
+    68 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    69 bind 127.0.0.1
+    
+    84 # By default protected mode is enabled. You should disable it only if
+    85 # you are sure you want clients from other hosts to connect to Redis
+    86 # even if no authentication is configured, nor a specific set of interfaces
+    87 # are explicitly listed using the "bind" directive.
+    88 protected-mode yes
+    
+    503 # Warning: since Redis is pretty fast an outside user can try up to
+    504 # 150k passwords per second against a good box. This means that you should
+    505 # use a very strong password otherwise it will be very easy to break.
+    506 #
+    507 # requirepass foobared
+
+为了保证Redis服务器的安全，我们给远程访问设置一个访问密码，通过requirepass设置，建议设置一个非常强壮的密码，我这边测试，使用密码123456:
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 2,3
+    
+    [root@hellolinux ~]# cp /etc/redis.conf /etc/redis.conf.bak
+    [root@hellolinux ~]# sed -i 's/^# requirepass foobared/requirepass 123456/g' /etc/redis.conf
+    [root@hellolinux ~]# sed -i 's/^bind 127.0.0.1/#bind 127.0.0.1/g' /etc/redis.conf
+    [root@hellolinux ~]# diff /etc/redis.conf /etc/redis.conf.bak 
+    69c69
+    < #bind 127.0.0.1
+    ---
+    > bind 127.0.0.1
+    507c507
+    < requirepass 123456
+    ---
+    > # requirepass foobared
+    [root@hellolinux ~]# cat -n /etc/redis.conf|sed -n '69p;507p'
+        69  #bind 127.0.0.1
+       507  requirepass 123456
+    
+重启Redis服务：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1,2
+    
+    [root@hellolinux ~]# systemctl restart redis
+    [root@hellolinux ~]# systemctl status redis
+    ● redis.service - Redis Server Manager
+       Loaded: loaded (/usr/lib/systemd/system/redis.service; enabled; vendor preset: disabled)
+       Active: active (running) since Sat 2019-08-24 23:28:39 CST; 7s ago
+      Process: 13839 ExecStop=/usr/local/bin/redis-cli shutdown (code=exited, status=0/SUCCESS)
+      Process: 13847 ExecStartPost=/usr/bin/echo Done!!! (code=exited, status=0/SUCCESS)
+      Process: 13843 ExecStart=/usr/local/bin/redis-server /etc/redis.conf (code=exited, status=0/SUCCESS)
+      Process: 13842 ExecStartPre=/usr/local/bin/redis-server -v (code=exited, status=0/SUCCESS)
+     Main PID: 13846 (redis-server)
+       CGroup: /system.slice/redis.service
+               └─13846 /usr/local/bin/redis-server 127.0.0.1:6379
+    
+    Aug 24 23:28:39 hellolinux.com systemd[1]: Stopped Redis Server Manager.
+    Aug 24 23:28:39 hellolinux.com systemd[1]: Starting Redis Server Manager...
+    Aug 24 23:28:39 hellolinux.com redis-server[13842]: Redis server v=5.0.5 sha=00000000:0 malloc=jemalloc-5.1.0 bits=64 build=f7b5a960d4c13390
+    Aug 24 23:28:39 hellolinux.com echo[13847]: Done!!!
+    Aug 24 23:28:39 hellolinux.com systemd[1]: Started Redis Server Manager.
+
+
+再次连接远程服务器：
+
+
+下面连接远程主机上指定端口的Redis服务器：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 6,8
+    
+    $ ipython
+    Python 3.6.2 (v3.6.2:5fd33b5, Jul  8 2017, 04:57:36) [MSC v.1900 64 bit (AMD64)]
+    Type 'copyright', 'credits' or 'license' for more information
+    IPython 7.4.0 -- An enhanced Interactive Python. Type '?' for help.
+    
+    >>> import redis
+    
+    >>> conn = redis.Redis(host='192.168.56.103', port=6379,password='123456')
+    
+    >>> conn
+    Redis<ConnectionPool<Connection<host=192.168.56.103,port=6379,db=0>>>
+    
+列出所有的键(目前为空):
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1
+    
+    >>> conn.keys('*')
+    []
+
+说明已经可以正常取出远程Redis服务器的数据了！
+
+设置和获取数据:
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1,4,7
+    
+    >>> conn.set('secret','nil')
+    True
+    
+    >>> conn.get('secret')
+    b'nil'
+    
+    >>> conn.keys('*')
+    [b'secret']
+
+后续待补！
 
 
 参考文献:
@@ -4056,3 +4253,4 @@ Redis配置
 - `Redis安装与卸载 <https://www.cnblogs.com/zerotomax/p/7468833.html>`_
 - `redis常用命令、常见错误、配置技巧等分享 <https://www.cnblogs.com/itxuexiwang/p/5200734.html>`_
 - `centos下部署redis服务环境及其配置说明 <https://www.cnblogs.com/kevingrace/p/6265722.html>`_
+- `Redis 命令参考 <http://doc.redisfans.com/>`_
