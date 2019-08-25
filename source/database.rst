@@ -4476,6 +4476,397 @@ Redis字符串
     >>> conn.get('four')          
     b'0'                          
 
+Redis列表
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Redis列表仅能包含字符串。
+
+- ``lpush()`` 朝列表头部插入数据。
+
+向列表'rlist'头部(left)插入数据::
+
+    >>> conn.lpush?                                                          
+    Signature: conn.lpush(name, *values)                                     
+    Docstring: Push ``values`` onto the head of the list ``name``            
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py   
+    Type:      method                                                        
+                                                                             
+    >>> conn.lpush('rlist', 'one')                                           
+    1                                                                        
+
+- ``lrange()`` 获取列表给定偏移量的所有值，start和end不能省略，偏移量0到-1表示获取所有的数据。
+
+
+获取列表'rlist'刚才插入的数据::
+
+    >>> conn.lrange?                                                           
+    Signature: conn.lrange(name, start, end)                                   
+    Docstring:                                                                 
+    Return a slice of the list ``name`` between                                
+    position ``start`` and ``end``                                             
+                                                                               
+    ``start`` and ``end`` can be negative numbers just like                    
+    Python slicing notation                                                    
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py     
+    Type:      method                                                          
+                                                                               
+    >>> conn.lrange('rlist', 0, -1)                                            
+    [b'one']                                                                   
+
+向列表'rlist'头部(left)一次插入多条数据::
+
+    >>> conn.lpush('rlist', 'two', 'three')
+    3
+    
+    >>> conn.lrange('rlist', 0, -1)
+    [b'three', b'two', b'one']
+
+可以看到在前的数据会先插入到列表头部，靠后的数据后插入列表头部，如先插入'two'，后插入'three'。
+
+- ``linsert()`` 在一个值的前或者后插入数据。
+
+
+获取列表'rlist'刚才插入的数据::
+
+    >>> conn.linsert?
+    Signature: conn.linsert(name, where, refvalue, value)
+    Docstring:
+    Insert ``value`` in list ``name`` either immediately before or after
+    [``where``] ``refvalue``
+    
+    Returns the new length of the list on success or -1 if ``refvalue``
+    is not in the list.
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
+    
+    >>> conn.linsert('rlist', 'before', 'two', 'before_2')
+    4
+    
+    >>> conn.linsert('rlist', 'after', 'two', 'after_2')
+    5
+    
+    >>> conn.lrange('rlist', 0, -1)
+    [b'three', b'before_2', b'two', b'after_2', b'one']
+
+可以看出插入数据的前后相对 ``refvalue`` 就是列表的前后顺序，我们在Redis服务器上面也可以看到列表数据::
+
+    [root@hellolinux ~]# redis-cli -a 123456 2>/dev/null
+    127.0.0.1:6379> ping
+    PONG
+    127.0.0.1:6379> LRANGE rlist 0 -1
+    1) "three"
+    2) "before_2"
+    3) "two"
+    4) "after_2"
+    5) "one"
+    127.0.0.1:6379> 
+
+- ``lset()`` 替换列表指定索引处的值，index索引必须真实存在，否则会提示"ResponseError: index out of range"异常。
+
+替换列表'rlist'指定索引处的数据::
+
+    >>> conn.lset?                                                                      
+    Signature: conn.lset(name, index, value)                                            
+    Docstring: Set ``position`` of list ``name`` to ``value``                           
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py              
+    Type:      method                                                                   
+    
+    # 先将索引1处的"before_2"替换成了"lset"
+    >>> conn.lset('rlist', 1, 'lset')                                                   
+    True                                                                                
+                                                                                        
+    >>> conn.lrange('rlist', 0, -1)                                                     
+    [b'three', b'lset', b'two', b'after_2', b'one']                                     
+    
+    # 再将索引为-1，也就是列表尾部数据替换成"tail"
+    >>> conn.lset('rlist', -1, 'tail')
+    True
+    
+    >>> conn.lrange('rlist', 0, -1)
+    [b'three', b'lset', b'two', b'after_2', b'tail']
+
+此时在Redis服务器上面也可以通过 ``LRANGE`` 看到列表数据::
+
+    127.0.0.1:6379> LRANGE rlist 0 -1
+    1) "three"
+    2) "lset"
+    3) "two"
+    4) "after_2"
+    5) "tail
+
+- ``lindex()`` 获取列表指定索引处的值，index索引不存在时，返回 ``None`` 。
+
+获取列表'rlist'指定索引处的数据::
+
+    >>> conn.lindex?                                                            
+    Signature: conn.lindex(name, index)                                         
+    Docstring:                                                                  
+    Return the item from list ``name`` at position ``index``                    
+                                                                                
+    Negative indexes are supported and will return an item at the               
+    end of the list                                                             
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py      
+    Type:      method                                                           
+    
+    # 获取索引1处的值
+    >>> conn.lindex('rlist', 1)                                                 
+    b'lset'                                                                     
+    
+    # 获取索引0处的值，也就是列表头部
+    >>> conn.lindex('rlist', 0)                                                 
+    b'three'                                                                    
+    
+    # 获取索引-1处的值，也就是列表尾部
+    >>> conn.lindex('rlist', -1)                                                
+    b'tail'                                                                     
+                                                                                
+    >>> conn.lindex('rlist', -2)                                                
+    b'after_2'                                                                  
+
+此时在Redis服务器上面也可以通过 ``LINDEX`` 看到列表数据::
+
+    127.0.0.1:6379> LINDEX rlist 1
+    "lset"
+    127.0.0.1:6379> LINDEX rlist 0
+    "three"
+    127.0.0.1:6379> LINDEX rlist -1
+    "tail"
+    127.0.0.1:6379> LINDEX rlist -2
+    "after_2"
+
+- ``llen()`` 获取列表的长度 。
+
+
+获取列表'rlist'的长度::
+
+    >>> conn.llen?
+    Signature: conn.llen(name)
+    Docstring: Return the length of the list ``name``
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
+    
+    >>> conn.llen('rlist')
+    5
+
+此时在Redis服务器上面也可以通过 ``LLEN`` 看到列表的长度::
+
+    127.0.0.1:6379> LLEN rlist
+    (integer) 5
+
+- ``lpop()`` 将列表头部的第一个元素弹出。
+
+获取列表'rlist'指定索引处的数据::
+
+    >>> conn.lpop?                                                           
+    Signature: conn.lpop(name)                                               
+    Docstring: Remove and return the first item of the list ``name``         
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py   
+    Type:      method                                                        
+                                                                             
+    >>> conn.lpop('rlist')                                                   
+    b'three'                                                                 
+                                                                             
+    >>> conn.lrange('rlist', 0, -1)                                          
+    [b'lset', b'two', b'after_2', b'tail']                                   
+
+此时在Redis服务器上面查看数据，可以发现头部的第一个元素"three"已经被弹出，即删除掉了::
+
+    127.0.0.1:6379> LRANGE rlist 0 -1
+    1) "lset"
+    2) "two"
+    3) "after_2"
+    4) "tail"
+
+- ``lpushx()`` 将列表(列表必须存在)头部的插入数据。
+
+向不存在、存在的列表中插入数据::
+
+    >>> conn.lpushx?
+    Signature: conn.lpushx(name, value)
+    Docstring: Push ``value`` onto the head of the list ``name`` if ``name`` exists
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
+    
+    # 列表"a"不存在，插入数据失败
+    >>> conn.lpushx('a', 'b')
+    0
+    
+    # 获取到空列表
+    >>> conn.lrange('a', 0, -1)
+    []
+    
+    # 向已经存在的"rlist"插入数据，插入数据成功
+    >>> conn.lpushx('rlist', 'lpushx')
+    5
+    
+    >>> conn.lrange('rlist', 0, -1)
+    [b'lpushx', b'lset', b'two', b'after_2', b'tail']
+
+- ``lastsave()`` 返回Redis数据库保存到磁盘的最后时间。
+
+查看数据保存到磁盘的最后时间::
+
+    >>> conn.lastsave?
+    Signature: conn.lastsave()
+    Docstring:
+    Return a Python datetime object representing the last time the
+    Redis database was saved to disk
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
+    
+    >>> conn.lastsave
+    <bound method StrictRedis.lastsave of Redis<ConnectionPool<Connection<host=192.168.56.103,port=6379,db=0>>>>
+    
+    >>> conn.lastsave()
+    datetime.datetime(2019, 8, 25, 19, 59, 16)
+
+- ``rpush()`` 朝列表尾部插入数据。
+
+向列表尾部和头部一次插入多个数据::
+
+    >>> conn.rpush?
+    Signature: conn.rpush(name, *values)
+    Docstring: Push ``values`` onto the tail of the list ``name``
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
+    
+    >>> conn.lrange('rlist', 0, -1)                            
+    [b'lpushx', b'lset', b'two', b'after_2', b'tail']          
+                                                               
+    >>> conn.rpush('rlist', 'push', 'push','push','push')      
+    9                                                          
+                                                               
+    >>> conn.lrange('rlist', 0, -1)                            
+    [b'lpushx',                                                
+     b'lset',                                                  
+     b'two',                                                   
+     b'after_2',                                               
+     b'tail',                                                  
+     b'push',                                                  
+     b'push',                                                  
+     b'push',                                                  
+     b'push']                                                  
+                                                               
+    >>> conn.lpush('rlist', 'push', 'push','push','push')      
+    13                                                         
+                                                               
+    >>> conn.lrange('rlist', 0, -1)                            
+    [b'push',                                                  
+     b'push',                                                  
+     b'push',                                                  
+     b'push',                                                  
+     b'lpushx',                                                
+     b'lset',                                                  
+     b'two',                                                   
+     b'after_2',                                               
+     b'tail',                                                  
+     b'push',                                                  
+     b'push',                                                  
+     b'push',                                                  
+     b'push']                                                  
+
+- ``lrem()`` 移除列表中指定数量的值。
+
+删除列表尾部和头部指定的数据::
+
+    >>> conn.lrem?                                                                           
+    Signature: conn.lrem(name, value, num=0)                                                 
+    Docstring:                                                                               
+    Remove the first ``num`` occurrences of elements equal to ``value``                      
+    from the list stored at ``name``.                                                        
+                                                                                             
+    The ``num`` argument influences the operation in the following ways:                     
+        num > 0: Remove elements equal to value moving from head to tail.                    
+        num < 0: Remove elements equal to value moving from tail to head.                    
+        num = 0: Remove all elements equal to value.                                         
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py                   
+    Type:      method                                                                        
+    
+    # 删除头部的1个"push"，头部剩余3个"push"
+    >>> conn.lrem('rlist', 'push', 1)                                                        
+    1                                                                                        
+                                                                                             
+    >>> conn.lrange('rlist', 0, -1)                                                          
+    [b'push',                                                                                
+     b'push',                                                                                
+     b'push',                                                                                
+     b'lpushx',                                                                              
+     b'lset',                                                                                
+     b'two',                                                                                 
+     b'after_2',                                                                             
+     b'tail',                                                                                
+     b'push',                                                                                
+     b'push',                                                                                
+     b'push',                                                                                
+     b'push']                                                                                
+                                                                                             
+    # 删除头部的2个"push" ，头部剩余1个"push"                                                
+    >>> conn.lrem('rlist', 'push', 2)                                                        
+    2                                                                                        
+                                                                                             
+    >>> conn.lrange('rlist', 0, -1)                                                          
+    [b'push',                                                                                
+     b'lpushx',                                                                              
+     b'lset',                                                                                
+     b'two',                                                                                 
+     b'after_2',                                                                             
+     b'tail',                                                                                
+     b'push',                                                                                
+     b'push',                                                                                
+     b'push',                                                                                
+     b'push']                                                                                
+                                                                                             
+    # 删除尾部的3个"push" ，尾部剩余1个"push"                                                
+    >>> conn.lrem('rlist', 'push', -3)                                                       
+    3                                                                                        
+                                                                                             
+    >>> conn.lrange('rlist', 0, -1)                                                          
+    [b'push', b'lpushx', b'lset', b'two', b'after_2', b'tail', b'push']                      
+    
+    # 删除剩余的所有的"push"，最后没有"push"
+    >>> conn.lrem('rlist', 'push', 0)                                                        
+    2                                                                                        
+                                                                                             
+    >>> conn.lrange('rlist', 0, -1)                                                          
+    [b'lpushx', b'lset', b'two', b'after_2', b'tail']                                        
+
+- ``ltrim()`` 仅保留列表中指定范围内的值。
+
+仅保留指定范围内的值::
+
+    >>> conn.ltrim?                                                                
+    Signature: conn.ltrim(name, start, end)                                        
+    Docstring:                                                                     
+    Trim the list ``name``, removing all values not within the slice               
+    between ``start`` and ``end``                                                  
+                                                                                   
+    ``start`` and ``end`` can be negative numbers just like                        
+    Python slicing notation                                                        
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py         
+    Type:      method                                                              
+    
+    # 仅保留索引1和索引2处的值，'lpushx'，'after_2'，'tail'被删除
+    >>> conn.ltrim('rlist', 1, 2)                                                  
+    True                                                                           
+                                                                                   
+    >>> conn.lrange('rlist', 0, -1)                                                
+    [b'lset', b'two']                                                              
+                                                                                   
+    >>> conn.ltrim('rlist', 0, 0)                                                  
+    True                                                                           
+                                                                                   
+    >>> conn.lrange('rlist', 0, -1)                                                
+    [b'lset']                                                                      
+
+
+
+
+
+
+
+
+
+
 
 参考文献:
 
