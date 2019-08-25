@@ -4479,12 +4479,8 @@ Redis字符串
     [b'4', b'5', b'Redis', b'5.0.5']                                          
 
 
-使用 ``incr()`` 或 ``incrbyfloat()`` 增加值，``decr()`` 减少值， 没有 ``decrbyfloat()`` 函数，可以用增加负数代替：
+使用 ``incr()`` 或 ``incrbyfloat()`` 增加值，``decr()`` 减少值， 没有 ``decrbyfloat()`` 函数，可以用增加负数代替::
 
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-5,9-13,17-21,58
-    
     >>> conn.incr?                                                               
     Signature: conn.incr(name, amount=1)                                         
     Docstring:                                                                   
