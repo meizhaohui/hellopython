@@ -144,12 +144,8 @@ sqlite3处理SQLite数据库
     
 - ``sqlite3.Connection.close()``  关闭数据库连接，在关闭数据库连接前，请确保所有的事务都被commit()提交，close()不会自动调用commit()提交事务
 
-关闭数据库连接，可以发现在关闭数据库连接后，再去执行execute去查询数据库信息会报 ``ProgrammingError`` 异常:
+关闭数据库连接，可以发现在关闭数据库连接后，再去执行execute去查询数据库信息会报 ``ProgrammingError`` 异常::
 
-.. code-block:: python
-    :linenos:
-    :emphasize-lines: 15
-   
     In [11]: conn.close()
 
     In [12]: conn
@@ -1451,12 +1447,8 @@ SQlite dialect方言示例::
 - 使用 ``join`` 进行联合查询。
 - 使用 ``Query.join()`` 方法最容易实现实际的SQL JOIN语法。
 
-使用 ``Query.filter()`` 在User和Address之间构造一个简单的隐式连接，并使用 ``Query.join()`` 方法实现连接:
+使用 ``Query.filter()`` 在User和Address之间构造一个简单的隐式连接，并使用 ``Query.join()`` 方法实现连接::
 
-.. code-block:: python
-    :linenos:
-    :emphasize-lines: 11
-    
     >>> for u, a in session.query(User, Address).\
     ...                     filter(User.id==Address.user_id).\
     ...                     filter(Address.email_address=='jack@google.com').\
@@ -3284,12 +3276,8 @@ python-memcached处理NoSQL非关系型数据库memcached
 使用memcached集群
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-使用memcached集群:
+使用memcached集群::
 
-.. code-block:: python
-    :linenos:
-    :emphasize-lines: 17,18,19
-   
     #!/usr/bin/python3
     """
     @Time    : 2019/6/2 21:15
@@ -3434,12 +3422,8 @@ python-memcached处理NoSQL非关系型数据库memcached
     
 可以发现在3个节点上存储键值对的比例为11:6:13，三个节点上面存储的键值对数量差不多。
 
-设置memcached集群的权重:
+设置memcached集群的权重::
 
-.. code-block:: python
-    :linenos:
-    :emphasize-lines: 17,18,19
-   
     #!/usr/bin/python3
     """
     @Time    : 2019/6/2 21:15
@@ -4084,12 +4068,8 @@ Redis字符串
 
 - 具有单一值的一个键被称作Redis的字符串。简单的Python数据类型可以自动转换成Redis字符串。
 
-下面连接远程主机上指定端口的Redis服务器：
+下面连接远程主机上指定端口的Redis服务器::
 
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 6,8
-    
     $ ipython
     Python 3.6.2 (v3.6.2:5fd33b5, Jul  8 2017, 04:57:36) [MSC v.1900 64 bit (AMD64)]
     Type 'copyright', 'credits' or 'license' for more information
@@ -4102,12 +4082,8 @@ Redis字符串
     >>> conn
     Redis<ConnectionPool<Connection<host=192.168.56.103,port=6379,db=0>>>
     
-列出所有的键(目前为空):
+列出所有的键(目前为空)::
 
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 3
-    
     >>> conn.keys('*')
     ... 省略
     ConnectionError: Error 10061 connecting to 192.168.56.103:6379. 由于目标计算机积极拒绝，无法连接。.
@@ -4115,12 +4091,8 @@ Redis字符串
 可以发现无法连接到远程Redis服务器，这是由于Redis默认禁止远程访问。
 
 
-由于Redis增加了 ``protected-mode`` 保护机制，并且通过 ``bind 127.0.0.1`` 来限制了ip访问，默认为127.0.0.1, 查看 ``/ect/redis.conf`` 配置文件内容:
+由于Redis增加了 ``protected-mode`` 保护机制，并且通过 ``bind 127.0.0.1`` 来限制了ip访问，默认为127.0.0.1, 查看 ``/ect/redis.conf`` 配置文件内容::
 
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 4,10,16
-    
     66 # IF YOU ARE SURE YOU WANT YOUR INSTANCE TO LISTEN TO ALL THE INTERFACES
     67 # JUST COMMENT THE FOLLOWING LINE.
     68 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4138,11 +4110,7 @@ Redis字符串
     506 #
     507 # requirepass foobared
 
-为了保证Redis服务器的安全，我们给远程访问设置一个访问密码，通过requirepass设置，建议设置一个非常强壮的密码，我这边测试，使用密码123456:
-
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 2,3
+为了保证Redis服务器的安全，我们给远程访问设置一个访问密码，通过requirepass设置，建议设置一个非常强壮的密码，我这边测试，使用密码123456::
     
     [root@hellolinux ~]# cp /etc/redis.conf /etc/redis.conf.bak
     [root@hellolinux ~]# sed -i 's/^# requirepass foobared/requirepass 123456/g' /etc/redis.conf
@@ -4160,12 +4128,8 @@ Redis字符串
         69  #bind 127.0.0.1
        507  requirepass 123456
     
-重启Redis服务：
+重启Redis服务::
 
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1,2
-    
     [root@hellolinux ~]# systemctl restart redis
     [root@hellolinux ~]# systemctl status redis
     ● redis.service - Redis Server Manager
@@ -4189,12 +4153,8 @@ Redis字符串
 再次连接远程服务器：
 
 
-下面连接远程主机上指定端口的Redis服务器：
+下面连接远程主机上指定端口的Redis服务器::
 
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 6,8
-    
     $ ipython
     Python 3.6.2 (v3.6.2:5fd33b5, Jul  8 2017, 04:57:36) [MSC v.1900 64 bit (AMD64)]
     Type 'copyright', 'credits' or 'license' for more information
@@ -4207,11 +4167,7 @@ Redis字符串
     >>> conn
     Redis<ConnectionPool<Connection<host=192.168.56.103,port=6379,db=0>>>
     
-列出所有的键(目前为空):
-
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-3,7
+列出所有的键(目前为空)::
     
     >>> conn.keys?                                                        
     Signature: conn.keys(pattern='*')                                     
@@ -4428,12 +4384,8 @@ Redis字符串
     >>> conn.get('version')
     b'5.0.5'
 
-``mget()`` 一次获取多个键的值：
+``mget()`` 一次获取多个键的值::
 
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-3,7,10
-    
     >>> conn.mget?                                                            
     Signature: conn.mget(keys, *args)                                         
     Docstring: Returns a list of values ordered identically to ``keys``       
