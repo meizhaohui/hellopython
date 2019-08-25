@@ -4858,11 +4858,40 @@ Redis列表
     >>> conn.lrange('rlist', 0, -1)                                                
     [b'lset']                                                                      
 
+- ``rpush()`` 朝列表( **列表必须存在** )尾部插入数据。
 
+向列表尾部插入一个数据::
 
+    >>> conn.rpushx?                                                                   
+    Signature: conn.rpushx(name, value)                                                
+    Docstring: Push ``value`` onto the tail of the list ``name`` if ``name`` exists    
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py             
+    Type:      method                                                                  
+                                                                                       
+    >>> conn.rpushx('rlist', 'push')                                                   
+    2                                                                                  
+                                                                                       
+    >>> conn.lrange('rlist', 0, -1)                                                    
+    [b'lset', b'push']                                                                 
 
+- ``rpop()`` 从列表尾部弹出数据，即删除列表尾部的数据。
 
+从列表尾部弹出数据::
 
+    >>> conn.rpop?                                                            
+    Signature: conn.rpop(name)                                                
+    Docstring: Remove and return the last item of the list ``name``           
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py    
+    Type:      method                                                         
+                                                                              
+    >>> conn.rpop('rlist')                                                    
+    b'push'                                                                   
+                                                                              
+    >>> conn.rpop('rlist')                                                    
+    b'lset'                                                                   
+                                                                              
+    >>> conn.lrange('rlist', 0, -1)                                           
+    []                                                                        
 
 
 
