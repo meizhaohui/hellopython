@@ -4211,7 +4211,13 @@ Redis字符串
 
 .. code-block:: 
     :linenos:
-    :emphasize-lines: 1
+    :emphasize-lines: 1-3,7
+    
+    >>> conn.keys?                                                        
+    Signature: conn.keys(pattern='*')                                     
+    Docstring: Returns a list of keys matching ``pattern``                
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method 
     
     >>> conn.keys('*')
     []
@@ -4222,10 +4228,33 @@ Redis字符串
 
 .. code-block:: 
     :linenos:
-    :emphasize-lines: 1,4,7
+    :emphasize-lines: 1-4,18,21-23,27
+    
+    >>> conn.set?
+    Signature: conn.set(name, value, ex=None, px=None, nx=False, xx=False)
+    Docstring:
+    Set the value at key ``name`` to ``value``
+    
+    ``ex`` sets an expire flag on key ``name`` for ``ex`` seconds.
+    
+    ``px`` sets an expire flag on key ``name`` for ``px`` milliseconds.
+    
+    ``nx`` if set to True, set the value at key ``name`` to ``value`` if it
+        does not already exist.
+    
+    ``xx`` if set to True, set the value at key ``name`` to ``value`` if it
+        already exists.
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
     
     >>> conn.set('secret','nil')
     True
+    
+    >>> conn.get?
+    Signature: conn.get(name)
+    Docstring: Return the value at key ``name``, or None if the key doesn't exist
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
     
     >>> conn.get('secret')
     b'nil'
@@ -4233,7 +4262,303 @@ Redis字符串
     >>> conn.keys('*')
     [b'secret']
 
-后续待补！
+删除键：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1-3,7
+    
+    >>> conn.delete?
+    Signature: conn.delete(*names)
+    Docstring: Delete one or more keys specified by ``names``
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
+    
+    >>> conn.delete('secret')
+    1
+    
+    >>> conn.keys('*')
+    []
+
+依次设置多个值，并获取相应的值：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1-3,7
+    
+    >>> conn.set('first', 'hello')  
+    True                            
+                                    
+    >>> conn.set('second', 2)       
+    True                            
+                                    
+    >>> conn.set('third', 3.14)     
+    True                            
+                                    
+    >>> conn.get('first')           
+    b'hello'                        
+                                    
+    >>> conn.get('second')          
+    b'2'                            
+                                    
+    >>> conn.get('third')           
+    b'3.14'                         
+
+``setnx()`` 方法 **只有当键不存在时** 才设定值：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1-3,7,10
+
+    >>> conn.setnx?                                                                      
+    Signature: conn.setnx(name, value)                                                   
+    Docstring: Set the value of key ``name`` to ``value`` if key doesn't exist           
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py               
+    Type:      method                                                                    
+                                                                                         
+    >>> conn.setnx('notexist', 'no')                                                     
+    True                                                                                 
+                                                                                         
+    >>> conn.setnx('first', 'hello,redis')                                               
+    False                                                                                
+    
+    >>> conn.get('notexist')     
+    b'no'                        
+    
+    >>> conn.get('first')
+    b'hello'
+    
+设置'notexist'成功，因为'notexist'不存在；而设置'first'失败，因为之前已经设置了'first'这个键。
+
+``getset()`` 方法会给键设置新值，并返回旧的键值：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1-5,9
+
+    >>> conn.getset?
+    Signature: conn.getset(name, value)
+    Docstring:
+    Sets the value at key ``name`` to ``value``
+    and returns the old value at key ``name`` atomically.
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
+    
+    >>> conn.getset('first', 'hello,redis')
+    b'hello'
+    
+    >>> conn.get('first')
+    b'hello,redis'
+
+``getrange()`` 方法获取键值的子串，``start`` 和 ``end`` 都会包含在内：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1-5,9,12,15
+
+    >>> conn.getrange?                                                             
+    Signature: conn.getrange(key, start, end)                                      
+    Docstring:                                                                     
+    Returns the substring of the string value stored at ``key``,                   
+    determined by the offsets ``start`` and ``end`` (both are inclusive)           
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py         
+    Type:      method                                                              
+                                                                                   
+    >>> conn.getrange('first', 7, -1)                                              
+    b'edis'                                                                        
+                                                                                   
+    >>> conn.getrange('first', 6, -1)                                              
+    b'redis'                                                                       
+                                                                                   
+    >>> conn.getrange('first', 0, 4)                                               
+    b'hello'                                                                       
+                                                                                   
+    >>> conn.getrange('first', 0,-1)
+    b'hello,redis'
+
+偏移量offset中，0代表开始，-1代表结束。
+
+``setrange()`` 方法对键值的子串进行替换，并返回替换后键值的长度，如果偏移量超过了原来键值的长度，则会使用空值补空占位：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1-11,15,21
+    
+    >>> conn.setrange?                                                       
+    Signature: conn.setrange(name, offset, value)                            
+    Docstring:                                                               
+    Overwrite bytes in the value of ``name`` starting at ``offset`` with     
+    ``value``. If ``offset`` plus the length of ``value`` exceeds the        
+    length of the original value, the new value will be larger than before.  
+    If ``offset`` exceeds the length of the original value, null bytes       
+    will be used to pad between the end of the previous value and the start  
+    of what's being injected.                                                
+                                                                             
+    Returns the length of the new string.                                    
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py   
+    Type:      method                                                        
+                                                                             
+    >>> conn.setrange('first',6,'Redis')                                     
+    11                                                                       
+                                                                             
+    >>> conn.get('first')                                                    
+    b'hello,Redis'                                                           
+                                                                             
+    >>> conn.setrange('first', 12, '!!!')                                    
+    15                                                                       
+                                                                             
+    >>> conn.get('first')                                                    
+    b'hello,Redis\x00!!!'                                                    
+
+``mset()`` 一次设置多个键值对，可使用字典或关键字参数创建多个键值对：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1-6,13,20
+    
+    >>> conn.mset?
+    Signature: conn.mset(*args, **kwargs)
+    Docstring:
+    Sets key/values based on a mapping. Mapping can be supplied as a single
+    dictionary argument or as kwargs.
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py
+    Type:      method
+    
+    >>> conn.keys()
+    [b'notexist', b'first', b'second', b'third']
+    
+    # 通过字典创建多个键值对
+    >>> conn.mset({'four': '4', 'five': 5})
+    True
+    
+    >>> conn.keys()
+    [b'five', b'first', b'third', b'four', b'notexist', b'second']
+    
+    # 通过关键字参数创建多个键值对
+    >>> conn.mset(name="Redis",version="5.0.5")
+    True
+    
+    >>> conn.keys()
+    [b'five',
+     b'first',
+     b'name',
+     b'third',
+     b'four',
+     b'notexist',
+     b'version',
+     b'second']
+    
+    >>> conn.get('four')
+    b'4'
+    
+    >>> conn.get('five')
+    b'5'
+    
+    >>> conn.get('name')
+    b'Redis'
+    
+    >>> conn.get('version')
+    b'5.0.5'
+
+``mget()`` 一次获取多个键的值：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1-3,7,10
+    
+    >>> conn.mget?                                                            
+    Signature: conn.mget(keys, *args)                                         
+    Docstring: Returns a list of values ordered identically to ``keys``       
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py    
+    Type:      method                                                         
+                                                                              
+    >>> conn.mget(['four', 'five', 'name', 'version'])                        
+    [b'4', b'5', b'Redis', b'5.0.5']                                          
+                                                                              
+    >>> conn.mget('four', 'five', 'name', 'version')                          
+    [b'4', b'5', b'Redis', b'5.0.5']                                          
+
+
+使用 ``incr()`` 或 ``incrbyfloat()`` 增加值，``decr()`` 减少值， 没有 ``decrbyfloat()`` 函数，可以用增加负数代替：
+
+.. code-block:: 
+    :linenos:
+    :emphasize-lines: 1-5,9-13,17-21,58
+    
+    >>> conn.incr?                                                               
+    Signature: conn.incr(name, amount=1)                                         
+    Docstring:                                                                   
+    Increments the value of ``key`` by ``amount``.  If no key exists,            
+    the value will be initialized as ``amount``                                  
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py       
+    Type:      method                                                            
+                                                                                 
+    >>> conn.incrbyfloat?                                                        
+    Signature: conn.incrbyfloat(name, amount=1.0)                                
+    Docstring:                                                                   
+    Increments the value at key ``name`` by floating ``amount``.                 
+    If no key exists, the value will be initialized as ``amount``                
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py       
+    Type:      method                                                            
+                                                                                 
+    >>> conn.decr?                                                               
+    Signature: conn.decr(name, amount=1)                                         
+    Docstring:                                                                   
+    Decrements the value of ``key`` by ``amount``.  If no key exists,            
+    the value will be initialized as 0 - ``amount``                              
+    File:      d:\programfiles\python362\lib\site-packages\redis\client.py       
+    Type:      method                                                            
+                                                                                 
+    >>> conn.incr('four')                                                        
+    5                                                                            
+                                                                                 
+    >>> conn.get('four')                                                         
+    b'5'                                                                         
+                                                                                 
+    >>> conn.incr('four', 2)                                                     
+    7                                                                            
+                                                                                 
+    >>> conn.get('four')                                                         
+    b'7' 
+    
+    >>> conn.incrbyfloat('third')                                                
+    4.14                                  
+                                          
+    >>> conn.get('third')                 
+    b'4.14'                               
+                                          
+    >>> conn.incrbyfloat('third', '3')    
+    7.14                                  
+                                          
+    >>> conn.get('third')                 
+    b'7.14'       
+    
+    >>> conn.decr('four')                   
+    6                                       
+                                            
+    >>> conn.decr('four', '2')              
+    4                                       
+                                            
+    >>> conn.get('four')                    
+    b'4'                                    
+                                            
+    >>> conn.incrbyfloat('third', '-3')     
+    4.14                                    
+                                            
+    >>> conn.get('third')                   
+    b'4.14'                                 
+    
+    >>> conn.incr('four', -2)     
+    2                             
+                                  
+    >>> conn.get('four')          
+    b'2'                          
+                                  
+    >>> conn.incr('four', -2)     
+    0                             
+                                  
+    >>> conn.get('four')          
+    b'0'                          
 
 
 参考文献:
