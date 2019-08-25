@@ -4224,11 +4224,7 @@ Redis字符串
 
 说明已经可以正常取出远程Redis服务器的数据了！
 
-设置和获取数据:
-
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-4,18,21-23,27
+设置和获取数据::
     
     >>> conn.set?
     Signature: conn.set(name, value, ex=None, px=None, nx=False, xx=False)
@@ -4262,11 +4258,7 @@ Redis字符串
     >>> conn.keys('*')
     [b'secret']
 
-删除键：
-
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-3,7
+删除键::
     
     >>> conn.delete?
     Signature: conn.delete(*names)
@@ -4280,11 +4272,7 @@ Redis字符串
     >>> conn.keys('*')
     []
 
-依次设置多个值，并获取相应的值：
-
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-3,7
+依次设置多个值，并获取相应的值::
     
     >>> conn.set('first', 'hello')  
     True                            
@@ -4304,11 +4292,7 @@ Redis字符串
     >>> conn.get('third')           
     b'3.14'                         
 
-``setnx()`` 方法 **只有当键不存在时** 才设定值：
-
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-3,7,10
+``setnx()`` 方法 **只有当键不存在时** 才设定值::
 
     >>> conn.setnx?                                                                      
     Signature: conn.setnx(name, value)                                                   
@@ -4330,11 +4314,7 @@ Redis字符串
     
 设置'notexist'成功，因为'notexist'不存在；而设置'first'失败，因为之前已经设置了'first'这个键。
 
-``getset()`` 方法会给键设置新值，并返回旧的键值：
-
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-5,9
+``getset()`` 方法会给键设置新值，并返回旧的键值::
 
     >>> conn.getset?
     Signature: conn.getset(name, value)
@@ -4350,11 +4330,7 @@ Redis字符串
     >>> conn.get('first')
     b'hello,redis'
 
-``getrange()`` 方法获取键值的子串，``start`` 和 ``end`` 都会包含在内：
-
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-5,9,12,15
+``getrange()`` 方法获取键值的子串，``start`` 和 ``end`` 都会包含在内::
 
     >>> conn.getrange?                                                             
     Signature: conn.getrange(key, start, end)                                      
@@ -4378,12 +4354,8 @@ Redis字符串
 
 偏移量offset中，0代表开始，-1代表结束。
 
-``setrange()`` 方法对键值的子串进行替换，并返回替换后键值的长度，如果偏移量超过了原来键值的长度，则会使用空值补空占位：
+``setrange()`` 方法对键值的子串进行替换，并返回替换后键值的长度，如果偏移量超过了原来键值的长度，则会使用空值补空占位::
 
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-11,15,21
-    
     >>> conn.setrange?                                                       
     Signature: conn.setrange(name, offset, value)                            
     Docstring:                                                               
@@ -4410,12 +4382,8 @@ Redis字符串
     >>> conn.get('first')                                                    
     b'hello,Redis\x00!!!'                                                    
 
-``mset()`` 一次设置多个键值对，可使用字典或关键字参数创建多个键值对：
+``mset()`` 一次设置多个键值对，可使用字典或关键字参数创建多个键值对::
 
-.. code-block:: 
-    :linenos:
-    :emphasize-lines: 1-6,13,20
-    
     >>> conn.mset?
     Signature: conn.mset(*args, **kwargs)
     Docstring:
