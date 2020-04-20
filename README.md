@@ -1,4 +1,8 @@
 # hellopython
+
+Archived. Please see the [https://github.com/meizhaohui/vueblog](https://github.com/meizhaohui/vueblog)
+
+
 Recording the process of learning Python, You can visit the Docs link: https://hellopython.readthedocs.io/zh_CN/latest/
 
 Docs build status:  [![Documentation Status](https://readthedocs.org/projects/hellopython/badge/?version=latest)](https://hellopython.readthedocs.io/zh_CN/latest/?badge=latest)
